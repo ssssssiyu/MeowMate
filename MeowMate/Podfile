@@ -1,0 +1,10 @@
+platform :ios, '11.0'
+
+target 'MeowMate' do
+  use_frameworks!
+
+  # 添加Firebase依赖
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging' # 如果你需要推送通知
+  # 其他Firebase模块根据需要添加
+end 
