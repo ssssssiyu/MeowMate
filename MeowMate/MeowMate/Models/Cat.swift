@@ -44,4 +44,6 @@ struct WeightRecord: Identifiable, Codable {
     let id: UUID
     var date: Date
     var weight: Double
-} 
+}
+
+

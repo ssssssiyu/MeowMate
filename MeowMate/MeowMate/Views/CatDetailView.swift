@@ -201,48 +201,7 @@ struct CatDetailView: View {
                 
                 // Wellness Section
                 Section {
-                    NavigationLink(destination: WellnessView(cat: displayedCat)) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Wellness")
-                                    .font(.subheadline)
-                                    .bold()
-                                
-                                Spacer()
-                                
-                                Text(wellnessViewModel.selectedDiseases.isEmpty ? "Healthy" : "\(wellnessViewModel.selectedDiseases.count) issues")
-                                    .font(.subheadline)
-                            }
-                            .padding(.bottom, 4)
-                            
-                            Divider()
-                            
-                            if !wellnessViewModel.healthTips.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    ForEach(wellnessViewModel.healthTips, id: \.self) { tip in
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "circle.fill")
-                                                .font(.system(size: 6))
-                                            Text(tip)
-                                                .font(.callout)
-                                        }
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            } else {
-                                Text("Long press to add health issues")
-                                    .font(.callout)
-                                    .foregroundColor(.secondary)
-                                    .padding(.vertical, 4)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2)
+                    WellnessCard(cat: displayedCat)
                 }
                 .padding(.horizontal)
                 
@@ -373,6 +332,72 @@ struct CatDetailView: View {
         displayedCat = finalCat
         onUpdate(finalCat)  // 这里会触发 HomeView 的更新
         isEditingProfile = false
+    }
+}
+
+struct WellnessCard: View {
+    let cat: Cat
+    @StateObject private var viewModel: WellnessViewModel
+    
+    init(cat: Cat) {
+        self.cat = cat
+        _viewModel = StateObject(wrappedValue: WellnessViewModel(cat: cat))
+    }
+    
+    var body: some View {
+        NavigationLink(destination: WellnessView(cat: cat)) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Wellness")
+                        .font(.subheadline)
+                        .bold()
+                    
+                    Spacer()
+                    
+                    if let urgencyLevel = viewModel.analysisHistory.first?.urgencyLevel {
+                        Text(urgencyLevel)
+                            .font(.subheadline)
+                            .foregroundColor(urgencyColor(urgencyLevel))
+                    } else {
+                        Text("Healthy")
+                            .font(.subheadline)
+                            .foregroundColor(.green)
+                    }
+                }
+                .padding(.bottom, 4)
+                
+                Divider()
+                
+                if let recommendations = viewModel.analysisHistory.first?.recommendations,
+                   !recommendations.isEmpty {
+                    Text(recommendations.map { "• " + $0 }.joined(separator: "\n"))
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .lineLimit(6)
+                        .truncationMode(.tail)
+                } else {
+                    Text("Long press to add health issues")
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(radius: 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func urgencyColor(_ urgency: String) -> Color {
+        switch urgency {
+        case "Immediate Care": return .red
+        case "Urgent Care": return .orange
+        case "Monitor": return .yellow
+        case "Home Care": return .green
+        default: return .blue
+        }
     }
 }
 

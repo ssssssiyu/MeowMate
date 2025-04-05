@@ -12,6 +12,8 @@ struct FirebaseConfig {
         static let products = "petsmart_products"
         static let cats = "cats"
         static let events = "events"  // 确保这个名称正确
+        static let wellness = "wellness"  // 可以添加健康记录集合
+        static let healthAnalyses = "healthAnalyses"  // 添加这个常量
     }
     
     // Storage 路径常量

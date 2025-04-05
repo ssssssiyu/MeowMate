@@ -247,4 +247,101 @@ class DataService {
                 .delete()
         }
     }
+    
+    func fetchHealthAnalyses(forCat catId: UUID) async throws -> [HealthAnalysis] {
+        let snapshot = try await db.collection(FirebaseConfig.Collections.healthAnalyses)
+            .whereField("catId", isEqualTo: catId.uuidString)
+            .order(by: "date", descending: true)
+            .limit(to: 5)  // 只获取最新的5条记录
+            .getDocuments()
+        
+        return try snapshot.documents.compactMap { document in
+            var data = document.data()
+            
+            // 将 Timestamp 转换回 Date
+            if let timestamp = data["date"] as? Timestamp {
+                data["date"] = Int(timestamp.dateValue().timeIntervalSince1970)
+            }
+            
+            let jsonData = try JSONSerialization.data(withJSONObject: data)
+            return try JSONDecoder().decode(HealthAnalysis.self, from: jsonData)
+        }
+    }
+    
+    func saveHealthAnalysis(_ analysis: HealthAnalysis) async throws {
+        // 先检查现有记录数量
+        let snapshot = try await db.collection(FirebaseConfig.Collections.healthAnalyses)
+            .whereField("catId", isEqualTo: analysis.catId.uuidString)
+            .order(by: "date", descending: true)
+            .getDocuments()
+        
+        // 如果已有5条或更多记录，删除最旧的记录
+        if snapshot.documents.count >= 5 {
+            let oldestDocs = snapshot.documents.suffix(from: 4)  // 从第5条开始的所有记录
+            for doc in oldestDocs {
+                try await doc.reference.delete()
+            }
+        }
+        
+        // 保存新记录
+        let data = try JSONEncoder().encode(analysis)
+        guard var dictionary = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert analysis to dictionary"])
+        }
+        
+        // 将 Date 转换为 Timestamp
+        if let dateDouble = dictionary["date"] as? Double {
+            dictionary["date"] = Timestamp(date: Date(timeIntervalSince1970: dateDouble))
+        }
+        
+        print("Attempting to save to Firebase:", dictionary)
+        
+        try await db.collection(FirebaseConfig.Collections.healthAnalyses)
+            .document(analysis.id.uuidString)
+            .setData(dictionary)
+        
+        print("Successfully saved to Firebase")
+    }
+    
+    func deleteAllHealthAnalyses(forCat catId: UUID) async throws {
+        let snapshot = try await db.collection(FirebaseConfig.Collections.healthAnalyses)
+            .whereField("catId", isEqualTo: catId.uuidString)
+            .getDocuments()
+        
+        for document in snapshot.documents {
+            try await document.reference.delete()
+        }
+    }
+    
+    func listenToHealthAnalyses(forCat catId: UUID, onChange: @escaping ([HealthAnalysis]) -> Void) async throws {
+        db.collection(FirebaseConfig.Collections.healthAnalyses)
+            .whereField("catId", isEqualTo: catId.uuidString)
+            .order(by: "date", descending: true)
+            .limit(to: 5)
+            .addSnapshotListener { snapshot, error in
+                guard let snapshot = snapshot else {
+                    print("❌ Error fetching analyses:", error ?? "Unknown error")
+                    return
+                }
+                
+                let analyses = snapshot.documents.compactMap { document -> HealthAnalysis? in
+                    var data = document.data()
+                    
+                    // 将 Timestamp 转换回 Date
+                    if let timestamp = data["date"] as? Timestamp {
+                        data["date"] = Int(timestamp.dateValue().timeIntervalSince1970)
+                    }
+                    
+                    do {
+                        let jsonData = try JSONSerialization.data(withJSONObject: data)
+                        return try JSONDecoder().decode(HealthAnalysis.self, from: jsonData)
+                    } catch {
+                        print("❌ Failed to decode analysis:", error)
+                        return nil
+                    }
+                }
+                
+                onChange(analyses)
+            }
+    }
 } 
