@@ -6,10 +6,10 @@ struct Cat: Identifiable, Codable {
     var breed: String
     var birthDate: Date
     var gender: Gender
-    var weight: Double
     var weightHistory: [WeightRecord]
     var isNeutered: Bool
     var image: UIImage?
+    var imageURL: String?
     
     enum Gender: String, Codable {
         case male = "Male"
@@ -17,12 +17,25 @@ struct Cat: Identifiable, Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, breed, birthDate, gender, weight, weightHistory, isNeutered
-        // 不包含 image，因为 UIImage 不能直接编码
+        case id, name, breed, birthDate, gender, weightHistory, isNeutered, imageURL
     }
     
-    var currentWeight: Double {
-        weightHistory.sorted(by: { $0.date > $1.date }).first?.weight ?? weight
+    var weight: Double {
+        weightHistory.sorted { $0.date > $1.date }.first?.weight ?? 0
+    }
+    
+    // 添加编码方法
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(breed, forKey: .breed)
+        try container.encode(birthDate, forKey: .birthDate)
+        try container.encode(gender, forKey: .gender)
+        try container.encode(weightHistory, forKey: .weightHistory)
+        try container.encode(isNeutered, forKey: .isNeutered)
+        try container.encode(imageURL, forKey: .imageURL)
+        // image 不编码
     }
 }
 

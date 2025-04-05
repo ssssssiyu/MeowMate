@@ -2,11 +2,13 @@ import SwiftUI
 import PhotosUI
 
 struct CatInfoFormView: View {
+    let existingCat: Cat?
     let onSave: (Cat, UIImage?) -> Void
+    private let formTitle: String  // 添加标题属性
     
     @Environment(\.dismiss) private var dismiss
     @State private var name = "Cat"  // 默认名字设为 "Cat"
-    @State private var breed = "British Shorthair"  // 默认品种
+    @State private var breed = ""  // 改为空字符串作为初始值
     @State private var birthDate = Date()
     @State private var gender = Cat.Gender.female
     @State private var weight = ""
@@ -17,14 +19,22 @@ struct CatInfoFormView: View {
     @State private var breeds: [String] = []
     @State private var isPresentingImagePicker = false
     @State private var isNeutered = false  // 添加在其他 @State 变量旁边
+    @State private var isLoadingDefaultImage = false  // 添加加载状态
+    @State private var defaultImage: UIImage?  // 存储当前品种的默认图片
+    @State private var defaultImageURL: String?  // 存储默认图片的URL
     
-    private var existingWeightHistory: [WeightRecord]
     private let breedService = BreedService()
     @Environment(\.presentationMode) var presentationMode
 
+    // 添加最大日期限制
+    private var maxDate: Date {
+        Date()  // 当前日期作为最大值
+    }
+
     init(existingCat: Cat? = nil, onSave: @escaping (Cat, UIImage?) -> Void) {
+        self.existingCat = existingCat
         self.onSave = onSave
-        self.existingWeightHistory = existingCat?.weightHistory ?? []
+        self.formTitle = existingCat == nil ? "Add Cat Information" : "Edit Cat Information"
         
         if let cat = existingCat {
             _name = State(initialValue: cat.name)
@@ -32,6 +42,7 @@ struct CatInfoFormView: View {
             _breed = State(initialValue: cat.breed)
             _gender = State(initialValue: cat.gender)
             _selectedImage = State(initialValue: cat.image)
+            _isNeutered = State(initialValue: cat.isNeutered)
         }
     }
 
@@ -42,6 +53,11 @@ struct CatInfoFormView: View {
         }
         if breed.isEmpty {
             validationMessage = "Please select a breed"
+            return false
+        }
+        // 添加生日验证
+        if birthDate > maxDate {
+            validationMessage = "Birth date cannot be in the future"
             return false
         }
         if let weightValue = Double(weight) {
@@ -58,91 +74,29 @@ struct CatInfoFormView: View {
 
     private func saveCat() {
         print("Attempting to save cat")
-        let weightDouble = Double(weight) ?? 0
         
         let newCat = Cat(
-            id: UUID(),
+            id: existingCat?.id ?? UUID(),
             name: name,
             breed: breed,
             birthDate: birthDate,
             gender: gender,
-            weight: weightDouble,
-            weightHistory: [
-                WeightRecord(
-                    id: UUID(),
-                    date: Date(),
-                    weight: weightDouble
-                )
-            ],
+            weightHistory: existingCat?.weightHistory ?? [],
             isNeutered: isNeutered,
-            image: selectedImage
+            image: selectedImage ?? defaultImage,  // 使用选择的图片或默认图片
+            imageURL: selectedImage == nil ? defaultImageURL : nil  // 如果使用默认图片，保存URL
         )
         
-        // 如果用户选择了照片，直接使用
-        if let selectedImage = selectedImage {
-            print("Using selected image")
-            onSave(newCat, selectedImage)
+        // 如果是编辑现有猫咪
+        if existingCat != nil {
+            onSave(newCat, selectedImage ?? defaultImage)
             dismiss()
             return
         }
         
-        // 如果没有选择照片，从 API 获取
-        Task {
-            do {
-                // 1. 先获取品种信息
-                let breedSearchUrl = URL(string: "https://api.thecatapi.com/v1/breeds/search?q=\(breed)")!
-                let (breedData, _) = try await URLSession.shared.data(from: breedSearchUrl)
-                print("Breed Search Response: \(String(data: breedData, encoding: .utf8) ?? "no data")")
-                
-                guard let breeds = try? JSONDecoder().decode([BreedInfo].self, from: breedData),
-                      let breedInfo = breeds.first,
-                      let referenceImageId = breedInfo.reference_image_id else {
-                    print("Could not find breed info for: \(breed)")
-                    await MainActor.run {
-                        onSave(newCat, nil)
-                        dismiss()
-                    }
-                    return
-                }
-                
-                // 2. 用参考图片 ID 获取具体图片
-                let imageUrl = URL(string: "https://api.thecatapi.com/v1/images/\(referenceImageId)")!
-                let (imageData, _) = try await URLSession.shared.data(from: imageUrl)
-                print("Image Response: \(String(data: imageData, encoding: .utf8) ?? "no data")")
-                
-                guard let catImage = try? JSONDecoder().decode(CatImage.self, from: imageData),
-                      let finalImageUrl = URL(string: catImage.url) else {
-                    print("Could not get image URL")
-                    await MainActor.run {
-                        onSave(newCat, nil)
-                        dismiss()
-                    }
-                    return
-                }
-                
-                // 3. 下载实际图片
-                let (finalImageData, _) = try await URLSession.shared.data(from: finalImageUrl)
-                if let image = UIImage(data: finalImageData) {
-                    print("Successfully got image")
-                    await MainActor.run {
-                        onSave(newCat, image)
-                        dismiss()
-                    }
-                } else {
-                    print("Could not create UIImage from data")
-                    await MainActor.run {
-                        onSave(newCat, nil)
-                        dismiss()
-                    }
-                }
-            } catch {
-                print("Error fetching cat image: \(error)")
-                await MainActor.run {
-                    onSave(newCat, nil)
-                    dismiss()
-                }
-            }
-        }
+        // 如果是添加新猫咪
+        onSave(newCat, selectedImage ?? defaultImage)
+        dismiss()
     }
 
     // 添加这个结构体来解析 API 返回的 JSON
@@ -161,11 +115,19 @@ struct CatInfoFormView: View {
             Form {
                 Section(header: Text("Cat Information")) {
                     TextField("Name", text: $name)
-                    DatePicker("Birth Date", selection: $birthDate, displayedComponents: .date)
+                    DatePicker("Birth Date", 
+                             selection: $birthDate,
+                             in: ...maxDate,  // 添加日期范围限制
+                             displayedComponents: .date)
                     Picker("Breed", selection: $breed) {
-                        Text("Select Breed").tag("")
                         ForEach(breeds, id: \.self) { breed in
                             Text(breed).tag(breed)
+                        }
+                    }
+                    .onAppear {
+                        // 如果品种列表为空，设置一个默认值
+                        if breeds.isEmpty {
+                            breeds = ["Loading..."]
                         }
                     }
                     Picker("Gender", selection: $gender) {
@@ -173,14 +135,55 @@ struct CatInfoFormView: View {
                         Text("Female").tag(Cat.Gender.female)
                     }
                     Toggle("Neutered", isOn: $isNeutered)  // 替换体重输入
-                    Button(action: {
-                        isPresentingImagePicker = true
-                    }) {
-                        Text(selectedImage == nil ? "Add Photo (Optional)" : "Change Photo")
+                    
+                    // 照片选择部分
+                    VStack(alignment: .leading, spacing: 10) {
+                        // 显示当前选择的图片预览
+                        if let image = selectedImage ?? defaultImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(height: 150)
+                                .frame(maxWidth: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        
+                        // 分开的按钮组
+                        VStack(spacing: 10) {
+                            // 选择/更改照片按钮
+                            Button(action: {
+                                isPresentingImagePicker = true
+                            }) {
+                                HStack {
+                                    Image(systemName: selectedImage == nil ? "photo.badge.plus" : "photo")
+                                    Text(selectedImage == nil ? "Add Photo" : "Change Photo")
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            
+                            // 使用默认照片按钮
+                            Button(action: {
+                                useDefaultImage()
+                            }) {
+                                HStack {
+                                    if isLoadingDefaultImage {
+                                        ProgressView()
+                                            .frame(width: 20, height: 20)
+                                    } else {
+                                        Image(systemName: "photo.circle.fill")
+                                        Text("Use Default Photo")
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(isLoadingDefaultImage)
+                        }
                     }
                 }
             }
-            .navigationTitle("Add Cat Information")
+            .navigationTitle(formTitle)  // 使用动态标题
             .navigationBarItems(
                 leading: Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
@@ -194,9 +197,17 @@ struct CatInfoFormView: View {
                 }
             )
             .onAppear {
+                // 加载品种列表
                 breedService.fetchBreeds { fetchedBreeds in
                     self.breeds = fetchedBreeds
+                    // 如果当前选择的品种不在列表中，选择第一个品种
+                    if !fetchedBreeds.contains(breed) {
+                        breed = fetchedBreeds.first ?? ""
+                    }
                 }
+                
+                // 初始加载默认图片
+                loadDefaultImage(for: breed)
             }
             .sheet(isPresented: $isPresentingImagePicker) {
                 ImagePicker(image: $selectedImage)
@@ -208,6 +219,40 @@ struct CatInfoFormView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .onChange(of: breed) { newBreed in
+                // 当品种改变时，加载新的默认图片
+                loadDefaultImage(for: newBreed)
+            }
+        }
+    }
+    
+    // 加载默认图片
+    private func loadDefaultImage(for breed: String) {
+        guard !breed.isEmpty else { return }
+        
+        Task {
+            isLoadingDefaultImage = true
+            if let breedImage = try? await DataService.shared.fetchBreedImage(breed: breed) {
+                await MainActor.run {
+                    defaultImage = breedImage.image
+                    defaultImageURL = breedImage.url
+                    isLoadingDefaultImage = false
+                }
+            } else {
+                await MainActor.run {
+                    defaultImage = nil
+                    defaultImageURL = nil
+                    isLoadingDefaultImage = false
+                }
+            }
+        }
+    }
+    
+    // 修改使用默认图片的方法
+    private func useDefaultImage() {
+        if let defaultImage = defaultImage {
+            selectedImage = nil  // 清除用户选择的图片
+            // 不需要额外操作，因为视图会自动使用 defaultImage
         }
     }
 } 

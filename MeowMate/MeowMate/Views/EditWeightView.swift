@@ -12,6 +12,11 @@ struct EditWeightView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
+    // 添加最大日期限制
+    private var maxDate: Date {
+        Date()  // 当前日期作为最大值
+    }
+    
     init(date: Date, weight: Double, existingRecords: [WeightRecord], onSave: @escaping (Date, Double) -> Void) {
         self.existingRecords = existingRecords
         self.onSave = onSave
@@ -22,46 +27,77 @@ struct EditWeightView: View {
     
     var body: some View {
         NavigationView {
-            Form {
-                Section {
-                    DatePicker("Date", selection: $selectedDate, displayedComponents: .date)
+            VStack(spacing: 0) {
+                // 日期选择器部分
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Select Date")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal)
+                    
+                    DatePicker("", selection: $selectedDate, 
+                             in: ...maxDate,  // 添加日期范围限制
+                             displayedComponents: .date)
                         .datePickerStyle(.graphical)
+                        .padding(.horizontal)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
                 }
+                .padding()
                 
-                Section(header: Text("Weight (kg)")) {
-                    HStack {
-                        Picker("Whole Number", selection: $wholeNumber) {
-                            ForEach(0...30, id: \.self) { number in
+                // 体重选择器部分
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Weight (kg)")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal)
+                    
+                    HStack(spacing: 0) {
+                        Picker("", selection: $wholeNumber) {
+                            ForEach(0...20, id: \.self) { number in
                                 Text("\(number)").tag(number)
                             }
                         }
                         .pickerStyle(.wheel)
-                        .frame(width: 100)
+                        .frame(maxWidth: .infinity)
                         
                         Text(".")
                             .font(.title2)
+                            .foregroundColor(.secondary)
+                            .frame(width: 20)
                         
-                        Picker("Decimal", selection: $decimal) {
+                        Picker("", selection: $decimal) {
                             ForEach(0...9, id: \.self) { number in
                                 Text("\(number)").tag(number)
                             }
                         }
                         .pickerStyle(.wheel)
-                        .frame(width: 100)
+                        .frame(maxWidth: .infinity)
                     }
                     .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                }
+                .padding()
+                
+                Spacer()
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Edit Weight Record")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        saveWeight()
+                    }
                 }
             }
-            .navigationTitle("Edit Weight Record")
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    dismiss()
-                },
-                trailing: Button("Save") {
-                    saveWeight()
-                }
-            )
-            .alert("Error", isPresented: $showingAlert) {
+            .alert("Invalid Input", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)

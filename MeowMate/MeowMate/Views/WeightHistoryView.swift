@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WeightHistoryView: View {
-    let cat: Cat
+    @Binding var cat: Cat
     let onUpdate: (Cat) -> Void
     
     @State private var showingAddWeight = false
@@ -38,19 +38,19 @@ struct WeightHistoryView: View {
             EditWeightView(
                 date: record.date,
                 weight: record.weight,
-                existingRecords: cat.weightHistory.filter { $0.date != record.date },
-                onSave: { newDate, newWeight in
-                    updateRecord(oldRecord: record, newDate: newDate, newWeight: newWeight)
+                existingRecords: cat.weightHistory.filter { $0.id != record.id },
+                onSave: { date, weight in
+                    updateRecord(record, date: date, weight: weight)
                 }
             )
         }
         .sheet(isPresented: $showingAddWeight) {
             EditWeightView(
                 date: Date(),
-                weight: cat.weight,
+                weight: 0,
                 existingRecords: cat.weightHistory,
                 onSave: { date, weight in
-                    addNewRecord(date: date, weight: weight)
+                    addWeight(date: date, weight: weight)
                 }
             )
         }
@@ -61,26 +61,59 @@ struct WeightHistoryView: View {
         }
     }
     
-    private func updateRecord(oldRecord: WeightRecord, newDate: Date, newWeight: Double) {
-        var updatedCat = cat
-        if let index = updatedCat.weightHistory.firstIndex(where: { $0.date == oldRecord.date }) {
-            updatedCat.weightHistory[index] = WeightRecord(
-                id: oldRecord.id,
-                date: newDate,
-                weight: newWeight
-            )
-            if index == updatedCat.weightHistory.count - 1 {
-                updatedCat.weight = newWeight
+    private func addWeight(date: Date, weight: Double) {
+        let newRecord = WeightRecord(id: UUID(), date: date, weight: weight)
+        cat.weightHistory.append(newRecord)
+        cat.weightHistory.sort { $0.date < $1.date }
+        
+        onUpdate(cat)
+        
+        Task {
+            do {
+                try await DataService.shared.saveCats([cat])
+                print("✅ Weight record saved successfully")
+            } catch {
+                print("❌ Error saving weight record: \(error)")
             }
-            onUpdate(updatedCat)
         }
     }
     
-    private func addNewRecord(date: Date, weight: Double) {
-        var updatedCat = cat
-        updatedCat.weightHistory.append(WeightRecord(id: UUID(), date: date, weight: weight))
-        updatedCat.weight = weight
+    private func updateRecord(_ record: WeightRecord, date: Date, weight: Double) {
+        let updatedRecord = WeightRecord(id: record.id, date: date, weight: weight)
+        var updatedHistory = cat.weightHistory
+        if let index = updatedHistory.firstIndex(where: { $0.id == record.id }) {
+            updatedHistory[index] = updatedRecord
+        }
+        
+        let updatedCat = Cat(
+            id: cat.id,
+            name: cat.name,
+            breed: cat.breed,
+            birthDate: cat.birthDate,
+            gender: cat.gender,
+            weightHistory: updatedHistory,
+            isNeutered: cat.isNeutered,
+            image: cat.image,
+            imageURL: cat.imageURL
+        )
+        
+        self.cat = updatedCat
         onUpdate(updatedCat)
+        
+        Task {
+            do {
+                try await DataService.shared.saveCats([updatedCat])
+                print("✅ Weight record updated successfully")
+            } catch {
+                print("❌ Error updating weight record: \(error)")
+            }
+        }
+    }
+    
+    private func deleteWeight(at offsets: IndexSet) {
+        cat.weightHistory.remove(atOffsets: offsets)
+        
+        onUpdate(cat)
     }
 }
 

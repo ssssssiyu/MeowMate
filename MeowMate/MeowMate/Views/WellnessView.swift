@@ -7,9 +7,11 @@ struct WellnessView: View {
     @State private var selectedDisease: String = ""
     @State private var showingDetail: Bool = false
     @State private var showClearAlert: Bool = false
+    @State private var cat: Cat
     
     init(cat: Cat) {
         _viewModel = StateObject(wrappedValue: WellnessViewModel(cat: cat))
+        _cat = State(initialValue: cat)
     }
     
     var body: some View {
@@ -114,6 +116,18 @@ struct WellnessView: View {
                     Text(error.localizedDescription)
                 }
             }
+        }
+    }
+    
+    private func saveWellnessData() {
+        // 保存到 UserDefaults
+        if let encodedData = try? JSONEncoder().encode(selectedDiseasesList) {
+            UserDefaults.standard.set(String(data: encodedData, encoding: .utf8), forKey: "selectedDiseases")
+        }
+        
+        // 同时需要保存到 Firebase
+        Task {
+            await DataService.shared.saveWellnessData(catId: cat.id, diseases: selectedDiseasesList)
         }
     }
 }

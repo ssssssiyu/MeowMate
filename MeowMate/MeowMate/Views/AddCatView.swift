@@ -56,18 +56,17 @@ struct AddCatView: View {
                                 date: Date(),
                                 weight: weightValue
                             )
-                            let cat = Cat(
+                            let newCat = Cat(
                                 id: UUID(),
                                 name: name,
                                 breed: breed,
                                 birthDate: birthDate,
                                 gender: gender,
-                                weight: weightValue,
                                 weightHistory: [weightRecord],
                                 isNeutered: isNeutered,
                                 image: selectedImage
                             )
-                            onCreate(cat)
+                            onCreate(newCat)
                             dismiss()
                         }
                     }

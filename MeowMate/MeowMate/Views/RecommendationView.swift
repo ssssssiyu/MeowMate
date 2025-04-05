@@ -4,52 +4,80 @@ struct RecommendationView: View {
     @ObservedObject var viewModel: RecommendationViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(viewModel.recommendations) { recommendation in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(recommendation.title)
-                        .font(.callout)
-                        .bold()
-                    Text(recommendation.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            // 营养建议部分
+            if !viewModel.recommendations.isEmpty {
+                GeometryReader { geometry in
+                    TabView {
+                        ForEach(viewModel.recommendations) { recommendation in
+                            HStack(spacing: 0) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(recommendation.title)
+                                        .font(.system(size: 16, weight: .medium))
+                                    Text(recommendation.description)
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 }
-                .padding(.vertical, 4)
-                
-                if !viewModel.recommendedProducts.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(viewModel.recommendedProducts) { product in
-                                ProductCard(product: product)
+                .frame(height: 45)
+            }
+            
+            Divider()
+            
+            // 推荐产品部分
+            if !viewModel.recommendedProducts.isEmpty {
+                GeometryReader { geometry in
+                    TabView {
+                        ForEach(viewModel.recommendedProducts) { product in
+                            Button(action: {
+                                if let url = URL(string: product.link) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                HStack(spacing: 0) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(product.name)
+                                            .font(.system(size: 16, weight: .medium))
+                                            .lineLimit(2)
+                                            .foregroundColor(.primary)
+                                        Text("$\(product.price, specifier: "%.2f")")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.blue)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
                             }
                         }
-                        .padding(.horizontal, 4)
                     }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 }
+                .frame(height: 55)
             }
         }
+        .padding(.vertical, 4)
     }
 }
 
-struct ProductCard: View {
-    let product: Product
+// 标签视图
+struct TagView: View {
+    let text: String
+    let color: Color
     
     var body: some View {
-        Link(destination: URL(string: product.url)!) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.caption)
-                    .lineLimit(2)
-                Text("$\(String(format: "%.2f", product.price))")
-                    .font(.caption)
-                    .bold()
-            }
-            .frame(width: 120)
-            .padding(8)
-            .background(Color(.systemBackground))
+        Text(text)
+            .font(.caption)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.2))
+            .foregroundColor(color)
             .cornerRadius(8)
-            .shadow(radius: 1)
-        }
-        .buttonStyle(PlainButtonStyle())
     }
-} 
+}
+

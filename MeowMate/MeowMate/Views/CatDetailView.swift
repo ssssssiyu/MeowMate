@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CatDetailView: View {
+    @State private var displayedCat: Cat
     let cat: Cat
     let onDelete: () -> Void
     let onUpdate: (Cat) -> Void
@@ -10,9 +11,12 @@ struct CatDetailView: View {
     @State private var selectedDiseases: [String] = []
     @State private var healthTips: [String] = []
     @State private var isWeightSectionExpanded: Bool = false
+    @State private var isEditingProfile = false
+    @State private var isPresentingCatInfoForm = false
     
     init(cat: Cat, onDelete: @escaping () -> Void, onUpdate: @escaping (Cat) -> Void) {
         self.cat = cat
+        self._displayedCat = State(initialValue: cat)
         self.onDelete = onDelete
         self.onUpdate = onUpdate
         _wellnessViewModel = StateObject(wrappedValue: WellnessViewModel(cat: cat))
@@ -26,74 +30,82 @@ struct CatDetailView: View {
                 Section {
                     TabView {
                         // First Page - Basic Information
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Basic Information")
-                                    .font(.subheadline)
-                                    .bold()
-                                
-                                Spacer()
-                                
-                                Text(cat.name)
-                                    .font(.subheadline)
-                            }
-                            .padding(.bottom, 4)
-                            
-                            Divider()
-                            
-                            HStack(alignment: .top, spacing: 20) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(cat.breed)
+                        Button(action: {
+                            isPresentingCatInfoForm = true
+                        }) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Basic Information")
                                         .font(.subheadline)
-                                    Text("\(Calendar.current.dateComponents([.year], from: cat.birthDate, to: Date()).year ?? 0) years")
-                                        .font(.subheadline)
-                                    Text(cat.gender.rawValue)
-                                        .font(.subheadline)
-                                    Text(cat.isNeutered ? "Neutered" : "Not Neutered")
+                                        .bold()
+                                    
+                                    Spacer()
+                                    
+                                    Text(displayedCat.name)
                                         .font(.subheadline)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 4)
                                 
-                                // Right side - Photo
-                                if let image = cat.image {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 80, height: 80)
-                                        .clipShape(Circle())
-                                        .padding(.top, 8)
-                                } else {
-                                    // 使用 API 获取的默认照片
-                                    AsyncImage(url: URL(string: "https://api.thecatapi.com/v1/images/search?breed_ids=\(cat.breed.replacingOccurrences(of: " ", with: "_").lowercased())")) { phase in
-                                        switch phase {
-                                        case .success(let image):
-                                            image
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 80, height: 80)
-                                                .clipShape(Circle())
-                                                .padding(.top, 8)
-                                        case .failure(_), .empty:
-                                            Image(systemName: "photo")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 80, height: 80)
-                                                .clipShape(Circle())
-                                                .foregroundColor(.gray)
-                                                .padding(.top, 8)
-                                        @unknown default:
-                                            Image(systemName: "photo")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 80, height: 80)
-                                                .clipShape(Circle())
-                                                .foregroundColor(.gray)
-                                                .padding(.top, 8)
+                                Divider()
+                                
+                                HStack(alignment: .top, spacing: 20) {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(displayedCat.breed)
+                                            .font(.subheadline)
+                                        Text("\(Calendar.current.dateComponents([.year], from: displayedCat.birthDate, to: Date()).year ?? 0) years")
+                                            .font(.subheadline)
+                                        Text(displayedCat.gender.rawValue)
+                                            .font(.subheadline)
+                                        Text(displayedCat.isNeutered ? "Neutered" : "Not Neutered")
+                                            .font(.subheadline)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    // Right side - Photo
+                                    if let image = displayedCat.image {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 80, height: 80)
+                                            .clipShape(Circle())
+                                            .padding(.top, 8)
+                                    } else if let imageURL = displayedCat.imageURL {
+                                        // 使用已保存的 URL
+                                        AsyncImage(url: URL(string: imageURL)) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(Circle())
+                                                    .padding(.top, 8)
+                                            case .failure(_), .empty:
+                                                Image(systemName: "photo")
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(Circle())
+                                                    .foregroundColor(.gray)
+                                                    .padding(.top, 8)
+                                            @unknown default:
+                                                EmptyView()
+                                            }
                                         }
+                                    } else {
+                                        // 显示占位图
+                                        Image(systemName: "photo")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 80, height: 80)
+                                            .clipShape(Circle())
+                                            .foregroundColor(.gray)
+                                            .padding(.top, 8)
                                     }
                                 }
                             }
                         }
+                        .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         
@@ -108,7 +120,7 @@ struct CatDetailView: View {
                             
                             Divider()
                             
-                            BreedCharacteristicsView(breed: cat.breed)
+                            BreedCharacteristicsView(breed: displayedCat.breed)
                                 .padding(.vertical, 8)
                         }
                         .padding(.horizontal, 20)
@@ -125,7 +137,7 @@ struct CatDetailView: View {
                             
                             Divider()
                             
-                            BreedDescriptionView(breed: cat.breed)
+                            BreedDescriptionView(breed: displayedCat.breed)
                                 .padding(.vertical, 8)
                         }
                         .padding(.horizontal, 20)
@@ -169,9 +181,13 @@ struct CatDetailView: View {
                         if isWeightSectionExpanded {
                             Divider()
                             
-                            NavigationLink(destination: WeightHistoryView(cat: cat, onUpdate: onUpdate)) {
-                                WeightChartView(records: cat.weightHistory)
+                            NavigationLink(destination: WeightHistoryView(cat: $displayedCat, onUpdate: { updatedCat in
+                                displayedCat = updatedCat
+                                onUpdate(updatedCat)
+                            })) {
+                                WeightChartView(records: displayedCat.weightHistory)
                                     .frame(height: 200)
+                                    .padding(.horizontal, 20)
                             }
                         }
                     }
@@ -185,7 +201,7 @@ struct CatDetailView: View {
                 
                 // Wellness Section
                 Section {
-                    NavigationLink(destination: WellnessView(cat: cat)) {
+                    NavigationLink(destination: WellnessView(cat: displayedCat)) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Text("Wellness")
@@ -260,7 +276,7 @@ struct CatDetailView: View {
                 
                 // Events Section
                 Section {
-                    EventsView(catId: cat.id.uuidString)
+                    EventsView(catId: displayedCat.id.uuidString)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .background(Color(.systemBackground))
@@ -271,7 +287,7 @@ struct CatDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(cat.name)
+        .navigationTitle(displayedCat.name)
         .onAppear {
             if let storedData = UserDefaults.standard.string(forKey: "selectedDiseases")?.data(using: .utf8),
                let diseases = try? JSONDecoder().decode([String].self, from: storedData) {
@@ -280,20 +296,83 @@ struct CatDetailView: View {
                 recommendationViewModel.updateHealthIssues(diseases)
             }
         }
+        .sheet(isPresented: $isPresentingCatInfoForm) {
+            CatInfoFormView(existingCat: displayedCat, onSave: { updatedCat, image in
+                Task {
+                    var finalCat = updatedCat
+                    
+                    // 如果用户选择了新图片
+                    if let newImage = image {
+                        finalCat.image = newImage
+                        finalCat.imageURL = nil  // 清除旧的 URL，让系统重新上传
+                    } 
+                    // 如果品种改变了但没有新图片
+                    else if updatedCat.breed != displayedCat.breed {
+                        do {
+                            if let breedImage = try await DataService.shared.fetchBreedImage(breed: updatedCat.breed) {
+                                finalCat.imageURL = breedImage.url
+                                finalCat.image = breedImage.image
+                                print("✅ Successfully updated breed image")
+                            } else {
+                                print("⚠️ Could not get breed image, keeping existing image")
+                                finalCat.image = displayedCat.image
+                                finalCat.imageURL = displayedCat.imageURL
+                            }
+                        } catch {
+                            print("❌ Error fetching breed image: \(error)")
+                            finalCat.image = displayedCat.image
+                            finalCat.imageURL = displayedCat.imageURL
+                        }
+                    }
+                    // 如果什么都没改，保持原来的图片和 URL
+                    else {
+                        finalCat.image = displayedCat.image
+                        finalCat.imageURL = displayedCat.imageURL
+                    }
+                    
+                    displayedCat = finalCat
+                    onUpdate(finalCat)
+                }
+            })
+        }
     }
     
     // 添加获取当前体重的辅助函数
     private func getCurrentWeight() -> Double {
-        let sortedRecords = cat.weightHistory.sorted { $0.date > $1.date }
-        let now = Date()
+        let sortedRecords = displayedCat.weightHistory.sorted { $0.date > $1.date }
+        return sortedRecords.first?.weight ?? 0  // 直接返回最新记录的体重，如果没有则返回0
+    }
+    
+    // 将这些辅助类型和函数移到 struct 内部
+    private struct BreedInfo: Codable {
+        let reference_image_id: String?
+    }
+
+    private struct CatImage: Codable {
+        let url: String
+    }
+
+    @MainActor
+    private func updateCat(_ updatedCat: Cat, image: UIImage?) async {
+        var finalCat = updatedCat
         
-        // 找到最接近当前日期的记录
-        if let mostRecentRecord = sortedRecords.first(where: { $0.date <= now }) {
-            return mostRecentRecord.weight
+        if updatedCat.breed != displayedCat.breed {
+            // 如果品种改变了，重新获取品种图片
+            if let image = image {
+                finalCat.image = image
+            } else if let breedImage = try? await DataService.shared.fetchBreedImage(breed: updatedCat.breed) {
+                finalCat.imageURL = breedImage.url
+                finalCat.image = breedImage.image
+            }
+        } else {
+            // 保持原有图片
+            finalCat.image = image ?? displayedCat.image
+            finalCat.imageURL = displayedCat.imageURL
         }
         
-        // 如果没有找到合适的记录，返回最后记录的体重
-        return cat.weight
+        displayedCat = finalCat
+        onUpdate(finalCat)  // 这里会触发 HomeView 的更新
+        isEditingProfile = false
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class WellnessViewModel: ObservableObject {
     let cat: Cat
     @Published var selectedDiseases: [String] = []
@@ -122,18 +123,14 @@ class WellnessViewModel: ObservableObject {
     func loadDiseases() {
         isLoading = true
         
-        Task {
+        Task { @MainActor in
             do {
                 let fetchedDiseases = try await diseaseService.fetchDiseases()
-                DispatchQueue.main.async {
-                    self.diseases = fetchedDiseases
-                    self.isLoading = false
-                }
+                self.diseases = fetchedDiseases
+                self.isLoading = false
             } catch {
-                DispatchQueue.main.async {
-                    self.error = error
-                    self.isLoading = false
-                }
+                self.error = error
+                self.isLoading = false
             }
         }
     }

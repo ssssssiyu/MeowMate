@@ -42,6 +42,20 @@ struct WeightChartView: View {
         return minWeight...maxWeight
     }
     
+    var dateRange: ClosedRange<Date> {
+        let dates = filteredRecords.map(\.date)
+        guard let minDate = dates.min(), let maxDate = dates.max() else {
+            return Date()...Date()
+        }
+        
+        // 在最小和最大日期的基础上分别向前和向后延伸一点
+        let calendar = Calendar.current
+        let extendedMinDate = calendar.date(byAdding: .day, value: -1, to: minDate) ?? minDate
+        let extendedMaxDate = calendar.date(byAdding: .day, value: 1, to: maxDate) ?? maxDate
+        
+        return extendedMinDate...extendedMaxDate
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Time range selector
@@ -95,7 +109,8 @@ struct WeightChartView: View {
                     AxisValueLabel {
                         if let weight = value.as(Double.self) {
                             Text("\(weight, format: .number.precision(.fractionLength(1)))")
-                                .padding(.trailing, 16)
+                                .padding(.trailing, 8)
+                                .padding(.leading, 16)
                         }
                     }
                 }
@@ -105,6 +120,7 @@ struct WeightChartView: View {
                     AxisGridLine()
                 }
             }
+            .chartXScale(domain: dateRange)
             .chartOverlay { proxy in
                 GeometryReader { geometry in
                     Rectangle()
@@ -127,7 +143,9 @@ struct WeightChartView: View {
             }
             .frame(height: 120)
             .padding(.top, 24)
-            .padding(.leading, 8)
+            .padding(.leading, 16)
+            .padding(.trailing, 4)
         }
+        .padding(.horizontal, -8)
     }
 }

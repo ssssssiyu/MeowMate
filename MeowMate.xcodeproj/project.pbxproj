@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7955E7092D752E5C00632125 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 7955E7082D752E5C00632125 /* FirebaseStorage */; };
 		795C0E2D2D66857100445690 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 795C0E2C2D66857100445690 /* FirebaseAnalytics */; };
 		795C0E2F2D66857100445690 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 795C0E2E2D66857100445690 /* FirebaseAnalyticsOnDeviceConversion */; };
 		795C0E312D66857100445690 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 795C0E302D66857100445690 /* FirebaseAnalyticsWithoutAdIdSupport */; };
@@ -65,6 +66,7 @@
 			files = (
 				795C0E382D6686D800445690 /* SQLite in Frameworks */,
 				795C0E332D66857100445690 /* FirebaseAppCheck in Frameworks */,
+				7955E7092D752E5C00632125 /* FirebaseStorage in Frameworks */,
 				795C0E2D2D66857100445690 /* FirebaseAnalytics in Frameworks */,
 				795C0E352D66857100445690 /* FirebaseAppDistribution-Beta in Frameworks */,
 				795C0E312D66857100445690 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
@@ -147,6 +149,7 @@
 				795C0E372D6686D800445690 /* SQLite */,
 				79AF8C1A2D6A8A580064C0C3 /* FirebaseAuth */,
 				79AF8C1C2D6A8A610064C0C3 /* FirebaseFirestore */,
+				7955E7082D752E5C00632125 /* FirebaseStorage */,
 			);
 			productName = MeowMate;
 			productReference = 79B90B202D62B51E00657766 /* MeowMate.app */;
@@ -620,6 +623,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7955E7082D752E5C00632125 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 795C0E2B2D66857100445690 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		795C0E2C2D66857100445690 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 795C0E2B2D66857100445690 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

@@ -2,25 +2,26 @@ import SwiftUI
 import UserNotifications
 
 struct AddEventView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     let catId: String
     let onSave: (Event) -> Void
     
-    @State private var eventName: String = ""
+    @State private var eventName = ""
     @State private var eventDate = Date()
     @State private var selectedReminders: Set<Event.ReminderType> = []
+    @State private var showingReminderOptions = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Event Details")) {
+                Section {
                     TextField("Event Name", text: $eventName)
-                    DatePicker("Date", selection: $eventDate, in: Date()...)
+                    DatePicker("Date", selection: $eventDate, displayedComponents: [.date])
                 }
                 
-                Section(header: Text("Reminders")) {
+                Section(header: Text("Reminders (Optional)")) {
                     ForEach(Event.ReminderType.allCases, id: \.self) { type in
                         Toggle(type.rawValue, isOn: Binding(
                             get: { selectedReminders.contains(type) },
@@ -40,14 +41,14 @@ struct AddEventView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveEvent()
                     }
-                    .disabled(eventName.isEmpty || selectedReminders.isEmpty)
+                    .disabled(eventName.isEmpty)
                 }
             }
         }
@@ -63,7 +64,7 @@ struct AddEventView: View {
             id: UUID(),
             name: eventName,
             date: eventDate,
-            reminderTypes: selectedReminders,
+            reminderTypes: Array(selectedReminders),
             catId: catId
         )
         
@@ -74,7 +75,7 @@ struct AddEventView: View {
                 }
                 onSave(event)
                 DispatchQueue.main.async {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
             } else {
                 DispatchQueue.main.async {
