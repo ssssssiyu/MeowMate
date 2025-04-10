@@ -1,5 +1,8 @@
 import SwiftUI
 
+// 首先定义一个统一的颜色
+let mintGreen = Color(red: 55/255, green: 175/255, blue: 166/255)
+
 struct CatDetailView: View {
     @State private var displayedCat: Cat
     let cat: Cat
@@ -13,6 +16,7 @@ struct CatDetailView: View {
     @State private var isWeightSectionExpanded: Bool = false
     @State private var isEditingProfile = false
     @State private var isPresentingCatInfoForm = false
+    @StateObject private var eventsViewModel: EventsViewModel
     
     init(cat: Cat, onDelete: @escaping () -> Void, onUpdate: @escaping (Cat) -> Void) {
         self.cat = cat
@@ -21,6 +25,7 @@ struct CatDetailView: View {
         self.onUpdate = onUpdate
         _wellnessViewModel = StateObject(wrappedValue: WellnessViewModel(cat: cat))
         _recommendationViewModel = StateObject(wrappedValue: RecommendationViewModel(cat: cat, healthIssues: []))
+        _eventsViewModel = StateObject(wrappedValue: EventsViewModel(catId: cat.id.uuidString))
     }
     
     var body: some View {
@@ -35,6 +40,8 @@ struct CatDetailView: View {
                         }) {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
+                                    Image(systemName: "pawprint.circle.fill")
+                                        .foregroundColor(mintGreen)
                                     Text("Basic Information")
                                         .font(.subheadline)
                                         .bold()
@@ -112,6 +119,8 @@ struct CatDetailView: View {
                         // Second Page - Characteristics
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
+                                Image(systemName: "star.circle.fill")
+                                    .foregroundColor(mintGreen)
                                 Text("Characteristics")
                                     .font(.subheadline)
                                     .bold()
@@ -129,6 +138,8 @@ struct CatDetailView: View {
                         // Third Page - Description
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
+                                Image(systemName: "photo.circle.fill")
+                                    .foregroundColor(mintGreen)
                                 Text("Description")
                                     .font(.subheadline)
                                     .bold()
@@ -161,6 +172,8 @@ struct CatDetailView: View {
                             }
                         }) {
                             HStack {
+                                Image(systemName: "scalemass.fill")
+                                    .foregroundColor(mintGreen)
                                 // Left side - Title
                                 HStack {
                                     Text("Weight Tracking")
@@ -209,7 +222,9 @@ struct CatDetailView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Recommendation")
+                            Image(systemName: "fork.knife.circle.fill")
+                                .foregroundColor(mintGreen)
+                            Text("Recommendations")
                                 .font(.subheadline)
                                 .bold()
                             
@@ -235,12 +250,31 @@ struct CatDetailView: View {
                 
                 // Events Section
                 Section {
-                    EventsView(catId: displayedCat.id.uuidString)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(radius: 2)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "calendar.badge.clock")
+                                .foregroundColor(mintGreen)
+                            Text("Events")
+                                .font(.subheadline)
+                                .bold()
+                            
+                            Spacer()
+                            
+                            Text("\(eventsViewModel.events.count) upcoming")
+                                .font(.subheadline)
+                        }
+                        .padding(.bottom, 4)
+                        
+                        Divider()
+                        
+                        EventsView(catId: displayedCat.id.uuidString, viewModel: eventsViewModel)
+                            .padding(.vertical, 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(radius: 2)
                 }
                 .padding(.horizontal)
             }
@@ -348,6 +382,8 @@ struct WellnessCard: View {
         NavigationLink(destination: WellnessView(cat: cat)) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
+                    Image(systemName: "heart.circle.fill")
+                        .foregroundColor(mintGreen)
                     Text("Wellness")
                         .font(.subheadline)
                         .bold()

@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		791522612DA1D332008FEED5 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 791522602DA1D332008FEED5 /* FirebaseAuth */; };
-		791522632DA1D332008FEED5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 791522622DA1D332008FEED5 /* FirebaseFirestore */; };
-		791522652DA1D332008FEED5 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 791522642DA1D332008FEED5 /* FirebaseStorage */; };
-		791522682DA1D344008FEED5 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 791522672DA1D344008FEED5 /* SQLite */; };
+		796F62052DA7639A00C0C6D4 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 796F62042DA7639A00C0C6D4 /* SQLite */; };
+		796F62082DA763CD00C0C6D4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 796F62072DA763CD00C0C6D4 /* FirebaseAuth */; };
+		796F620A2DA763CD00C0C6D4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 796F62092DA763CD00C0C6D4 /* FirebaseFirestore */; };
+		796F620C2DA763CD00C0C6D4 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 796F620B2DA763CD00C0C6D4 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,10 +59,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				791522682DA1D344008FEED5 /* SQLite in Frameworks */,
-				791522612DA1D332008FEED5 /* FirebaseAuth in Frameworks */,
-				791522632DA1D332008FEED5 /* FirebaseFirestore in Frameworks */,
-				791522652DA1D332008FEED5 /* FirebaseStorage in Frameworks */,
+				796F62052DA7639A00C0C6D4 /* SQLite in Frameworks */,
+				796F620C2DA763CD00C0C6D4 /* FirebaseStorage in Frameworks */,
+				796F62082DA763CD00C0C6D4 /* FirebaseAuth in Frameworks */,
+				796F620A2DA763CD00C0C6D4 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,10 +131,10 @@
 			);
 			name = MeowMate;
 			packageProductDependencies = (
-				791522602DA1D332008FEED5 /* FirebaseAuth */,
-				791522622DA1D332008FEED5 /* FirebaseFirestore */,
-				791522642DA1D332008FEED5 /* FirebaseStorage */,
-				791522672DA1D344008FEED5 /* SQLite */,
+				796F62042DA7639A00C0C6D4 /* SQLite */,
+				796F62072DA763CD00C0C6D4 /* FirebaseAuth */,
+				796F62092DA763CD00C0C6D4 /* FirebaseFirestore */,
+				796F620B2DA763CD00C0C6D4 /* FirebaseStorage */,
 			);
 			productName = MeowMate;
 			productReference = 79B90B202D62B51E00657766 /* MeowMate.app */;
@@ -219,8 +219,8 @@
 			mainGroup = 79B90B172D62B51E00657766;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				7915225F2DA1D332008FEED5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				791522662DA1D344008FEED5 /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				796F62032DA7639A00C0C6D4 /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				796F62062DA763CD00C0C6D4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 79B90B212D62B51E00657766 /* Products */;
@@ -441,9 +441,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = me.siyu.MeowMate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -473,9 +477,13 @@
 				PRODUCT_BUNDLE_IDENTIFIER = me.siyu.MeowMate;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -589,15 +597,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		7915225F2DA1D332008FEED5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.11.0;
-			};
-		};
-		791522662DA1D344008FEED5 /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
+		796F62032DA7639A00C0C6D4 /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
 			requirement = {
@@ -605,28 +605,36 @@
 				minimumVersion = 0.15.3;
 			};
 		};
+		796F62062DA763CD00C0C6D4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.11.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		791522602DA1D332008FEED5 /* FirebaseAuth */ = {
+		796F62042DA7639A00C0C6D4 /* SQLite */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7915225F2DA1D332008FEED5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 796F62032DA7639A00C0C6D4 /* XCRemoteSwiftPackageReference "SQLite.swift" */;
+			productName = SQLite;
+		};
+		796F62072DA763CD00C0C6D4 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 796F62062DA763CD00C0C6D4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
 		};
-		791522622DA1D332008FEED5 /* FirebaseFirestore */ = {
+		796F62092DA763CD00C0C6D4 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7915225F2DA1D332008FEED5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 796F62062DA763CD00C0C6D4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
 		};
-		791522642DA1D332008FEED5 /* FirebaseStorage */ = {
+		796F620B2DA763CD00C0C6D4 /* FirebaseStorage */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7915225F2DA1D332008FEED5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = 796F62062DA763CD00C0C6D4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
-		};
-		791522672DA1D344008FEED5 /* SQLite */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 791522662DA1D344008FEED5 /* XCRemoteSwiftPackageReference "SQLite.swift" */;
-			productName = SQLite;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

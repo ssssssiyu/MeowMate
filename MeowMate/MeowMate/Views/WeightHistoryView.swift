@@ -22,6 +22,7 @@ struct WeightHistoryView: View {
                         selectedRecord = record
                     }
             }
+            .onDelete(perform: deleteWeight)
             
             Button(action: {
                 showingAddWeight = true
@@ -111,9 +112,24 @@ struct WeightHistoryView: View {
     }
     
     private func deleteWeight(at offsets: IndexSet) {
-        cat.weightHistory.remove(atOffsets: offsets)
+        // 获取要删除的记录
+        let recordsToDelete = offsets.map { sortedRecords[$0] }
+        
+        // 从原始数组中删除对应的记录
+        cat.weightHistory.removeAll { record in
+            recordsToDelete.contains { $0.id == record.id }
+        }
         
         onUpdate(cat)
+        
+        Task {
+            do {
+                try await DataService.shared.saveCats([cat])
+                print("✅ Weight record deleted successfully")
+            } catch {
+                print("❌ Error deleting weight record: \(error)")
+            }
+        }
     }
 }
 

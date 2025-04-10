@@ -1,83 +1,45 @@
 import SwiftUI
 
 struct EventsView: View {
-    @StateObject private var viewModel: EventsViewModel
+    let catId: String
+    @ObservedObject var viewModel: EventsViewModel
     @State private var showingAddEvent = false
-    @State private var selectedEvent: Event?
     
-    init(catId: String) {
-        _viewModel = StateObject(wrappedValue: EventsViewModel(catId: catId))
+    init(catId: String, viewModel: EventsViewModel) {
+        self.catId = catId
+        self.viewModel = viewModel
     }
     
     var body: some View {
-        VStack {
-            if viewModel.isLoading {
-                ProgressView()
+        VStack(alignment: .leading, spacing: 8) {
+            if viewModel.events.isEmpty {
+                Text("No upcoming events")
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 8)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Events")
-                            .font(.subheadline)
-                            .bold()
-                        
-                        Spacer()
-                        
-                        Text("\(viewModel.events.count) upcoming")
-                            .font(.subheadline)
-                    }
-                    .padding(.bottom, 4)
-                    
-                    Divider()
-                    
-                    if viewModel.events.isEmpty {
-                        Text("No upcoming events")
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                            .padding(.vertical, 4)
-                    } else {
-                        ForEach(viewModel.events.sorted { $0.date < $1.date }) { event in
-                            EventRow(event: event, onEdit: {
-                                selectedEvent = event
-                            })
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    withAnimation {
-                                        viewModel.deleteEvent(event)
-                                    }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                        }
-                    }
-                }
-                .onTapGesture {
-                    showingAddEvent = true
-                }
-                .sheet(isPresented: $showingAddEvent) {
-                    AddEventView(catId: viewModel.catId, onSave: { event in
-                        viewModel.addEvent(event)
-                    })
-                }
-                .sheet(item: $selectedEvent) { event in
-                    EditEventView(
-                        event: event,
-                        onUpdate: { updatedEvent in
-                            viewModel.updateEvent(updatedEvent)
-                        },
-                        onDelete: { event in
-                            viewModel.deleteEvent(event)
-                        }
-                    )
+                ForEach(viewModel.events) { event in
+                    EventRow(event: event)
                 }
             }
+        }
+        .contentShape(Rectangle())  // 确保整个区域可点击
+        .onTapGesture {
+            showingAddEvent = true
+        }
+        .sheet(isPresented: $showingAddEvent) {
+            AddEventView(catId: catId) { event in
+                // 使用 addEvent 方法来保存新事件
+                viewModel.addEvent(event)
+            }
+        }
+        .onAppear {
+            viewModel.fetchEvents()  // 视图出现时刷新
         }
     }
 }
 
 struct EventRow: View {
     let event: Event
-    let onEdit: () -> Void
     
     var body: some View {
         HStack {
@@ -98,9 +60,6 @@ struct EventRow: View {
             }
         }
         .padding(.vertical, 4)
-        .contentShape(Rectangle())  // 确保整个区域可点击
-        .onTapGesture {
-            onEdit()
-        }
+        .contentShape(Rectangle())
     }
 } 

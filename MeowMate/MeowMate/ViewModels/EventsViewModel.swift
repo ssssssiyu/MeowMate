@@ -6,22 +6,18 @@ import FirebaseFirestore
 class EventsViewModel: ObservableObject {
     @Published var events: [Event] = []
     @Published var isLoading = false  // 添加加载状态
-    let catId: String
+    private let catId: String
     private var listener: ListenerRegistration?
     
     init(catId: String) {
         self.catId = catId
-        setupListener(catId: catId)
-        Task {
-            await loadEvents()
-        }
+        fetchEvents()  // 改回使用 fetchEvents
     }
     
     private func setupListener(catId: String) {
         listener = DataService.shared.observeEvents(forCat: catId) { [weak self] events in
-            // 在主线程更新 UI
             DispatchQueue.main.async {
-                self?.events = events
+                self?.events = events.sorted { $0.date < $1.date }  // 确保事件按日期排序
             }
         }
     }
@@ -29,6 +25,30 @@ class EventsViewModel: ObservableObject {
     deinit {
         // 清理监听器
         listener?.remove()
+    }
+    
+    func fetchEvents() {
+        let db = Firestore.firestore()
+        db.collection("cats")
+            .document(catId)
+            .collection("events")
+            .getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    print("Error getting events: \(error)")
+                    return
+                }
+                
+                guard let documents = querySnapshot?.documents else {
+                    print("No events found")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.events = documents.compactMap { document -> Event? in
+                        try? document.data(as: Event.self)
+                    }
+                }
+            }
     }
     
     func loadEvents() async {

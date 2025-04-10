@@ -42,9 +42,19 @@ struct HomeView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("PawFile")
-                        .font(.title2)
-                        .bold()
+                    HStack(spacing: 6) {
+                        Image(systemName: "pawprint.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(red: 55/255, green: 175/255, blue: 166/255))
+                            .rotationEffect(.degrees(-15))
+                            .offset(y: 2)
+                        
+                        Text("PawFile")
+                            .font(.custom("Chalkboard SE", size: 22))
+                            .foregroundColor(Color(red: 55/255, green: 175/255, blue: 166/255))
+                            .shadow(color: Color(red: 55/255, green: 175/255, blue: 166/255).opacity(0.3), radius: 1, x: 1, y: 1)
+                    }
+                    .padding(.vertical, 4)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -169,17 +179,3 @@ struct HomeView: View {
     }
 }
 
-#Preview {
-    HomeView()
-}
-
-// 示例数据
-let exampleCat = Cat(
-    id: UUID(),
-    name: "Example Cat",
-    breed: "Mixed",
-    birthDate: Date(),
-    gender: .male,
-    weightHistory: [WeightRecord(id: UUID(), date: Date(), weight: 4.5)],
-    isNeutered: false
-)
