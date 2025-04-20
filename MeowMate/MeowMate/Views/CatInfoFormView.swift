@@ -26,11 +26,6 @@ struct CatInfoFormView: View {
     private let breedService = BreedService()
     @Environment(\.presentationMode) var presentationMode
 
-    // 添加最大日期限制
-    private var maxDate: Date {
-        Date()  // 当前日期作为最大值
-    }
-
     init(existingCat: Cat? = nil, onSave: @escaping (Cat, UIImage?) -> Void) {
         self.existingCat = existingCat
         self.onSave = onSave
@@ -41,7 +36,7 @@ struct CatInfoFormView: View {
             _birthDate = State(initialValue: cat.birthDate)
             _breed = State(initialValue: cat.breed)
             _gender = State(initialValue: cat.gender)
-            _selectedImage = State(initialValue: cat.image)
+            _selectedImage = State(initialValue: cat.imageURL == nil ? cat.image : nil)  // 只有当不是默认图片时才设置selectedImage
             _isNeutered = State(initialValue: cat.isNeutered)
         }
     }
@@ -53,11 +48,6 @@ struct CatInfoFormView: View {
         }
         if breed.isEmpty {
             validationMessage = "Please select a breed"
-            return false
-        }
-        // 添加生日验证
-        if birthDate > maxDate {
-            validationMessage = "Birth date cannot be in the future"
             return false
         }
         if let weightValue = Double(weight) {
@@ -81,22 +71,48 @@ struct CatInfoFormView: View {
             breed: breed,
             birthDate: birthDate,
             gender: gender,
+            weight: existingCat?.weight ?? 0,
             weightHistory: existingCat?.weightHistory ?? [],
             isNeutered: isNeutered,
-            image: selectedImage ?? defaultImage,  // 使用选择的图片或默认图片
-            imageURL: selectedImage == nil ? defaultImageURL : nil  // 如果使用默认图片，保存URL
+            image: selectedImage ?? defaultImage,
+            imageURL: selectedImage == nil ? defaultImageURL : nil
         )
         
-        // 如果是编辑现有猫咪
-        if existingCat != nil {
-            onSave(newCat, selectedImage ?? defaultImage)
-            dismiss()
-            return
+        // 只保存到本地
+        if let encodedData = try? JSONEncoder().encode(newCat) {
+            let key = "cat_\(newCat.id.uuidString)"
+            UserDefaults.standard.set(encodedData, forKey: key)
+            
+            // 更新猫咪列表
+            var cats = loadCats()
+            if let index = cats.firstIndex(where: { $0.id == newCat.id }) {
+                cats[index] = newCat
+            } else {
+                cats.append(newCat)
+            }
+            saveCats(cats)
         }
         
-        // 如果是添加新猫咪
         onSave(newCat, selectedImage ?? defaultImage)
         dismiss()
+    }
+    
+    private func loadCats() -> [Cat] {
+        let keys = UserDefaults.standard.dictionaryRepresentation().keys.filter { $0.hasPrefix("cat_") }
+        return keys.compactMap { key in
+            guard let data = UserDefaults.standard.data(forKey: key),
+                  let cat = try? JSONDecoder().decode(Cat.self, from: data) else {
+                return nil
+            }
+            return cat
+        }
+    }
+    
+    private func saveCats(_ cats: [Cat]) {
+        let catsData = cats.compactMap { cat -> Data? in
+            try? JSONEncoder().encode(cat)
+        }
+        UserDefaults.standard.set(catsData, forKey: "cats")
     }
 
     // 添加这个结构体来解析 API 返回的 JSON
@@ -112,90 +128,133 @@ struct CatInfoFormView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Cat Information")) {
-                    TextField("Name", text: $name)
-                    DatePicker("Birth Date", 
-                             selection: $birthDate,
-                             in: ...maxDate,  // 添加日期范围限制
-                             displayedComponents: .date)
-                    Picker("Breed", selection: $breed) {
-                        ForEach(breeds, id: \.self) { breed in
-                            Text(breed).tag(breed)
-                        }
-                    }
-                    .onAppear {
-                        // 如果品种列表为空，设置一个默认值
-                        if breeds.isEmpty {
-                            breeds = ["Loading..."]
-                        }
-                    }
-                    Picker("Gender", selection: $gender) {
-                        Text("Male").tag(Cat.Gender.male)
-                        Text("Female").tag(Cat.Gender.female)
-                    }
-                    Toggle("Neutered", isOn: $isNeutered)  // 替换体重输入
-                    
-                    // 照片选择部分
-                    VStack(alignment: .leading, spacing: 10) {
-                        // 显示当前选择的图片预览
-                        if let image = selectedImage ?? defaultImage {
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 150)
-                                .frame(maxWidth: .infinity)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
+            ScrollView {
+                VStack(spacing: Theme.Spacing.large) {
+                    // Cat Information Section
+                    VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
+                        SectionHeader(title: "Cat Information", icon: "pawprint.circle.fill")
                         
-                        // 分开的按钮组
-                        VStack(spacing: 10) {
-                            // 选择/更改照片按钮
-                            Button(action: {
-                                isPresentingImagePicker = true
-                            }) {
-                                HStack {
-                                    Image(systemName: selectedImage == nil ? "photo.badge.plus" : "photo")
-                                    Text(selectedImage == nil ? "Add Photo" : "Change Photo")
-                                }
-                                .frame(maxWidth: .infinity)
+                        VStack(spacing: Theme.Spacing.medium) {
+                            HStack(spacing: Theme.Spacing.medium) {
+                                CustomTextField(title: "Name", text: $name)
+                                    .frame(maxWidth: .infinity)
+                                CustomDatePicker(title: "Birth Date", date: $birthDate)
+                                    .frame(maxWidth: .infinity)
                             }
-                            .buttonStyle(.bordered)
                             
-                            // 使用默认照片按钮
-                            Button(action: {
-                                useDefaultImage()
-                            }) {
-                                HStack {
-                                    if isLoadingDefaultImage {
-                                        ProgressView()
-                                            .frame(width: 20, height: 20)
-                                    } else {
-                                        Image(systemName: "photo.circle.fill")
-                                        Text("Use Default Photo")
-                                    }
-                                }
-                                .frame(maxWidth: .infinity)
+                            CustomPicker(title: "Breed", selection: $breed, options: breeds)
+                            
+                            CustomGenderPicker(selection: $gender)
+                            
+                            Toggle("Neutered", isOn: $isNeutered)
+                                .tint(Theme.mintGreen)
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(Theme.CornerRadius.medium)
+                        .shadow(radius: Theme.Shadow.light)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Photo Section
+                    VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
+                        SectionHeader(title: "Photo", icon: "photo.circle.fill")
+                        
+                        VStack(spacing: Theme.Spacing.medium) {
+                            if let image = selectedImage ?? defaultImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 200)
+                                    .frame(maxWidth: .infinity)
+                                    .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.medium))
                             }
-                            .buttonStyle(.bordered)
-                            .disabled(isLoadingDefaultImage)
+                            
+                            HStack(spacing: Theme.Spacing.small) {
+                                Button(action: {
+                                    isPresentingImagePicker = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "photo.on.rectangle")
+                                        Text("Select")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Theme.mintGreen)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(Theme.CornerRadius.small)
+                                }
+                                
+                                Button(action: {
+                                    useDefaultImage()
+                                }) {
+                                    HStack {
+                                        if isLoadingDefaultImage {
+                                            ProgressView()
+                                                .tint(.white)
+                                        } else {
+                                            Image(systemName: "photo")
+                                            Text("Default")
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Theme.mintGreen)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(Theme.CornerRadius.small)
+                                }
+                                .disabled(isLoadingDefaultImage)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(Theme.CornerRadius.medium)
+                        .shadow(radius: Theme.Shadow.light)
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.vertical)
+            }
+            .navigationTitle(formTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle(formTitle)
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(Theme.mintGreen)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        if isFormValid {
+                            saveCat()
+                        } else {
+                            showingValidationAlert = true
                         }
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
             }
-            .navigationTitle(formTitle)  // 使用动态标题
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: Button("Save") {
-                    if isFormValid {
-                        saveCat()
-                    } else {
-                        showingValidationAlert = true
+            .sheet(isPresented: $isPresentingImagePicker) {
+                ImagePicker(image: $selectedImage)
+                    .onChange(of: selectedImage) { oldImage, newImage in
+                        // 只有当用户真正选择了新图片时，才使用选择的图片
+                        if newImage != nil {
+                            defaultImage = nil
+                            defaultImageURL = nil
+                        }
                     }
-                }
-            )
+            }
+            .alert(isPresented: $showingValidationAlert) {
+                Alert(
+                    title: Text("Invalid Form"),
+                    message: Text(validationMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
             .onAppear {
                 // 加载品种列表
                 breedService.fetchBreeds { fetchedBreeds in
@@ -209,17 +268,7 @@ struct CatInfoFormView: View {
                 // 初始加载默认图片
                 loadDefaultImage(for: breed)
             }
-            .sheet(isPresented: $isPresentingImagePicker) {
-                ImagePicker(image: $selectedImage)
-            }
-            .alert(isPresented: $showingValidationAlert) {
-                Alert(
-                    title: Text("Invalid Form"),
-                    message: Text(validationMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-            .onChange(of: breed) { newBreed in
+            .onChange(of: breed) { oldBreed, newBreed in
                 // 当品种改变时，加载新的默认图片
                 loadDefaultImage(for: newBreed)
             }
@@ -236,6 +285,10 @@ struct CatInfoFormView: View {
                 await MainActor.run {
                     defaultImage = breedImage.image
                     defaultImageURL = breedImage.url
+                    // 如果用户没有选择自定义图片，则使用默认图片
+                    if selectedImage == nil {
+                        useDefaultImage()
+                    }
                     isLoadingDefaultImage = false
                 }
             } else {
@@ -250,9 +303,115 @@ struct CatInfoFormView: View {
     
     // 修改使用默认图片的方法
     private func useDefaultImage() {
-        if let defaultImage = defaultImage {
-            selectedImage = nil  // 清除用户选择的图片
-            // 不需要额外操作，因为视图会自动使用 defaultImage
+        selectedImage = nil  // 清除用户选择的图片
+    }
+}
+
+// 自定义组件
+struct SectionHeader: View {
+    let title: String
+    let icon: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(Theme.mintGreen)
+            Text(title)
+                .font(.headline)
+                .bold()
+        }
+    }
+}
+
+struct CustomTextField: View {
+    let title: String
+    @Binding var text: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            TextField("", text: $text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .accentColor(Theme.mintGreen)
+        }
+    }
+}
+
+struct CustomDatePicker: View {
+    let title: String
+    @Binding var date: Date
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            DatePicker("", selection: $date, in: ...Date(), displayedComponents: .date)
+                .labelsHidden()
+                .accentColor(Theme.mintGreen)
+        }
+    }
+}
+
+struct CustomPicker: View {
+    let title: String
+    @Binding var selection: String
+    let options: [String]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            
+            Menu {
+                ForEach(options, id: \.self) { option in
+                    Button(action: {
+                        selection = option
+                    }) {
+                        if selection == option {
+                            Label(option, systemImage: "checkmark")
+                        } else {
+                            Text(option)
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(selection.isEmpty ? "Select a breed" : selection)
+                        .foregroundColor(selection.isEmpty ? .gray : .primary)
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+            }
+        }
+    }
+}
+
+struct CustomGenderPicker: View {
+    @Binding var selection: Cat.Gender
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.small) {
+            Text("Gender")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+            Picker("", selection: $selection) {
+                Text("Male").tag(Cat.Gender.male)
+                Text("Female").tag(Cat.Gender.female)
+            }
+            .pickerStyle(.segmented)
+            .accentColor(Theme.mintGreen)
         }
     }
 } 

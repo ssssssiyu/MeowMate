@@ -263,6 +263,10 @@ struct CatDetailView: View {
                             Text("\(eventsViewModel.events.count) upcoming")
                                 .font(.subheadline)
                         }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            eventsViewModel.showingAddEvent = true
+                        }
                         .padding(.bottom, 4)
                         
                         Divider()
@@ -397,7 +401,7 @@ struct WellnessCard: View {
                     } else {
                         Text("Healthy")
                             .font(.subheadline)
-                            .foregroundColor(.green)
+                            .foregroundColor(mintGreen)
                     }
                 }
                 .padding(.bottom, 4)
@@ -415,6 +419,7 @@ struct WellnessCard: View {
                     Text("Long press to add health issues")
                         .font(.callout)
                         .foregroundColor(.secondary)
+                        .padding(.vertical, 4)
                 }
             }
             .padding(.horizontal, 20)

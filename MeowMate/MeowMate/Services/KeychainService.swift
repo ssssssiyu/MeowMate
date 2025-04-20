@@ -15,7 +15,6 @@ enum KeychainService {
         SecItemDelete(query as CFDictionary)
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            print("Error saving to keychain: \(status)")
             return
         }
     }

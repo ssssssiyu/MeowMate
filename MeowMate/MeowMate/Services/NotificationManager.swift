@@ -7,10 +7,8 @@ class NotificationManager {
     private init() {}
     
     func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
-            if let error = error {
-                print("Error requesting notification authorization: \(error)")
-            }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, _ in
+            // Handle success if needed
         }
     }
     
@@ -28,10 +26,8 @@ class NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         let request = UNNotificationRequest(identifier: "weightCheck-\(cat.id)", content: content, trigger: trigger)
         
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Error scheduling notification: \(error)")
-            }
+        UNUserNotificationCenter.current().add(request) { _ in
+            // Handle completion if needed
         }
     }
     

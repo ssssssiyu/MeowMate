@@ -19,70 +19,11 @@ struct WellnessView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // 第一页：AI 分析
-            List {
-                Section {
-                    SymptomSelectionSection(viewModel: viewModel)
-                }
-                
-                if !viewModel.healthTips.isEmpty {
-                    Section(header: Text("Health Tips")) {
-                        ForEach(viewModel.healthTips, id: \.self) { tip in
-                            Text(tip)
-                        }
-                    }
-                }
-            }
-            .tag(0)
-            .navigationTitle("Health Analysis")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingResetAlert = true
-                    }) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .foregroundColor(.red)
-                            .font(.system(size: 14))
-                            .scaleEffect(0.9)
-                    }
-                }
-            }
-            .alert("Reset Health Analysis", isPresented: $showingResetAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Reset", role: .destructive) {
-                    Task {
-                        do {
-                            try await DataService.shared.deleteAllHealthAnalyses(forCat: cat.id)
-                            await MainActor.run {
-                                viewModel.analysisHistory = []
-                            }
-                        } catch {
-                            print("❌ Failed to reset health analyses:", error)
-                            viewModel.error = error
-                        }
-                    }
-                }
-            } message: {
-                Text("This will delete all health analysis history. This action cannot be undone.")
-            }
+            HealthAnalysisTab(viewModel: viewModel, showingResetAlert: $showingResetAlert, cat: cat)
+                .tag(0)
             
-            // 第二页：疾病类别
-            List {
-                ForEach(DiseaseCategory.allCases, id: \.self) { category in
-                    if !diseasesInCategory(category).isEmpty {
-                        Section(header: CategoryHeader(category: category)) {
-                            ForEach(diseasesInCategory(category)) { disease in
-                                DiseaseRow(disease: disease)
-                                    .onTapGesture {
-                                        selectedDisease = disease
-                                    }
-                            }
-                        }
-                    }
-                }
-            }
-            .tag(1)
-            .navigationTitle("Disease Library")
+            DiseaseLibraryTab(viewModel: viewModel, selectedDisease: $selectedDisease)
+                .tag(1)
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))
@@ -121,7 +62,6 @@ struct WellnessView: View {
                 viewModel.selectedDiseases = diseases
                 viewModel.updateHealthTips()
             }
-            // 直接使用 ViewModel 的 diseases 属性
             viewModel.diseases = viewModel.diseaseService.commonDiseases
         }
         .alert("Error", isPresented: .constant(viewModel.error != nil)) {
@@ -136,18 +76,98 @@ struct WellnessView: View {
     }
     
     private func saveWellnessData() {
-        // 保存到 UserDefaults
         if let encodedData = try? JSONEncoder().encode(selectedDiseasesList) {
             UserDefaults.standard.set(String(data: encodedData, encoding: .utf8), forKey: "selectedDiseases")
         }
-        
-        // 同时需要保存到 Firebase
-        Task {
-            await DataService.shared.saveWellnessData(catId: cat.id, diseases: selectedDiseasesList)
+    }
+}
+
+// 健康分析标签页
+struct HealthAnalysisTab: View {
+    let viewModel: WellnessViewModel
+    @Binding var showingResetAlert: Bool
+    let cat: Cat
+    
+    var body: some View {
+        List {
+            Section {
+                SymptomSelectionSection(viewModel: viewModel)
+            }
+            
+            if !viewModel.healthTips.isEmpty {
+                Section(header: Text("Health Tips")) {
+                    ForEach(viewModel.healthTips, id: \.self) { tip in
+                        Text(tip)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Health Analysis")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Theme.Text.navigationTitle("Health Analysis")
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingResetAlert = true
+                }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .foregroundColor(.primary)
+                        .font(.system(size: 14))
+                        .scaleEffect(0.9)
+                }
+            }
+        }
+        .alert("Reset Health Analysis", isPresented: $showingResetAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                Task {
+                    do {
+                        try await DataService.shared.deleteAllHealthAnalyses(forCat: cat.id)
+                        await MainActor.run {
+                            viewModel.analysisHistory = []
+                        }
+                    } catch {
+                        viewModel.error = error
+                    }
+                }
+            }
+        } message: {
+            Text("This will delete all health analysis history. This action cannot be undone.")
+        }
+    }
+}
+
+// 疾病库标签页
+struct DiseaseLibraryTab: View {
+    let viewModel: WellnessViewModel
+    @Binding var selectedDisease: Disease?
+    
+    var body: some View {
+        List {
+            ForEach(DiseaseCategory.allCases, id: \.self) { category in
+                if !diseasesInCategory(category).isEmpty {
+                    Section(header: CategoryHeader(category: category)) {
+                        ForEach(diseasesInCategory(category)) { disease in
+                            DiseaseRow(disease: disease)
+                                .onTapGesture {
+                                    selectedDisease = disease
+                                }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Disease Library")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Theme.Text.navigationTitle("Disease Library")
+            }
         }
     }
     
-    // 获取特定类别的疾病
     private func diseasesInCategory(_ category: DiseaseCategory) -> [Disease] {
         viewModel.diseases.filter { $0.category == category }
     }
@@ -160,7 +180,9 @@ struct CategoryHeader: View {
     var body: some View {
         HStack {
             Image(systemName: category.systemImage)
+                .foregroundColor(Theme.mintGreen)
             Text(category.rawValue)
+                .foregroundColor(Theme.mintGreen)
         }
     }
 }
@@ -287,44 +309,94 @@ struct DiseaseDetailView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(disease.name)
-                        .font(.title)
-                        .bold()
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Description")
-                            .font(.headline)
-                        Text(disease.description)
-                            .font(.body)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Symptoms")
-                            .font(.headline)
-                        Text(disease.symptoms.joined(separator: ", "))
-                            .font(.body)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Dietary Recommendation")
-                            .font(.headline)
-                        Text(disease.recommendation.title)
-                            .font(.subheadline)
-                            .bold()
-                        Text(disease.recommendation.description)
-                            .font(.body)
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // 标题部分
+                        Text(disease.name)
+                            .font(.system(size: 24))
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.horizontal)
+                            .padding(.bottom, 4)
                         
-                        HStack {
-                            Text("Priority:")
-                            Text(disease.recommendation.priority.rawValue.capitalized)
-                                .foregroundColor(priorityColor(disease.recommendation.priority))
-                                .bold()
+                        // 描述部分
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Image(systemName: disease.category.systemImage)
+                                    .foregroundColor(Theme.mintGreen)
+                                Text("Description")
+                                    .font(.headline)
+                                    .foregroundColor(Theme.mintGreen)
+                            }
+                            Text(disease.description)
+                                .font(.body)
+                                .foregroundColor(.primary)
                         }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(16)
+                        
+                        // 症状部分
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "list.bullet")
+                                    .foregroundColor(Theme.mintGreen)
+                                Text("Symptoms")
+                                    .font(.headline)
+                                    .foregroundColor(Theme.mintGreen)
+                            }
+                            ForEach(disease.symptoms, id: \.self) { symptom in
+                                HStack {
+                                    Image(systemName: "circle.fill")
+                                        .font(.system(size: 6))
+                                        .foregroundColor(Theme.mintGreen)
+                                    Text(symptom)
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(16)
+                        
+                        // 建议部分
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "heart.text.square")
+                                    .foregroundColor(Theme.mintGreen)
+                                Text("Advice")
+                                    .font(.headline)
+                                    .foregroundColor(Theme.mintGreen)
+                            }
+                            Text(disease.recommendation.title)
+                                .font(.subheadline)
+                                .bold()
+                                .foregroundColor(.primary)
+                            Text(disease.recommendation.description)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                            
+                            HStack {
+                                Text("Priority:")
+                                    .foregroundColor(.primary)
+                                Text(disease.recommendation.priority.rawValue.capitalized)
+                                    .foregroundColor(priorityColor(disease.recommendation.priority))
+                                    .bold()
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(16)
                     }
+                    .padding()
                 }
-                .padding()
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -332,19 +404,20 @@ struct DiseaseDetailView: View {
                     Button("Close") {
                         dismiss()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
             }
         }
     }
     
-    private func priorityColor(_ priority: Disease.DietaryRecommendation.Priority) -> Color {
+    private func priorityColor(_ priority: Disease.CareAdvice.Priority) -> Color {
         switch priority {
         case .high:
             return .red
         case .medium:
             return .orange
         case .low:
-            return .blue
+            return Theme.mintGreen
         }
     }
 }
@@ -475,7 +548,6 @@ struct AIAdviceView: View {
                         }
                     }
                 } catch {
-                    print("❌ Error getting AI advice:", error)
                     viewModel.error = error
                 }
             }
@@ -502,12 +574,12 @@ struct SymptomBubble: View {
             .font(.system(size: 14))
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.blue.opacity(0.3) : Color.blue.opacity(0.1))
-            .foregroundColor(isSelected ? .blue : .gray)
+            .background(isSelected ? Theme.mintGreen.opacity(0.3) : Theme.mintGreen.opacity(0.1))
+            .foregroundColor(isSelected ? Theme.mintGreen : .gray)
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? Theme.mintGreen : Color.gray.opacity(0.3), lineWidth: 1)
             )
             .animation(.spring(response: 0.3), value: isSelected)
             .onTapGesture {
@@ -515,6 +587,28 @@ struct SymptomBubble: View {
                     isSelected.toggle()
                 }
             }
+    }
+}
+
+#Preview {
+    NavigationView {
+        WellnessView(
+            cat: Cat(
+                id: UUID(),
+                name: "Luna",
+                breed: "British Shorthair",
+                birthDate: Calendar.current.date(byAdding: .year, value: -2, to: Date()) ?? Date(),
+                gender: .female,
+                weight: 4.5,
+                weightHistory: [
+                    WeightRecord(id: UUID(), date: Date().addingTimeInterval(-7*24*3600), weight: 4.2),
+                    WeightRecord(id: UUID(), date: Date(), weight: 4.5)
+                ],
+                isNeutered: true,
+                image: nil,
+                imageURL: nil
+            )
+        )
     }
 }
 

@@ -14,7 +14,7 @@ struct AIAnalysisButton: View {
                 .frame(width: 300)
                 .foregroundColor(.white)
                 .padding()
-                .background(isEnabled ? Color.blue : Color.gray)
+                .background(isEnabled ? Theme.mintGreen : Color.gray)
                 .cornerRadius(10)
             }
             .disabled(!isEnabled)

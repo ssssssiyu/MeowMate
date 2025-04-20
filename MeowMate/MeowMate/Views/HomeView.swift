@@ -50,7 +50,7 @@ struct HomeView: View {
                             .offset(y: 2)
                         
                         Text("PawFile")
-                            .font(.custom("Chalkboard SE", size: 22))
+                            .font(.custom("Chalkboard SE", size: 24))
                             .foregroundColor(Color(red: 55/255, green: 175/255, blue: 166/255))
                             .shadow(color: Color(red: 55/255, green: 175/255, blue: 166/255).opacity(0.3), radius: 1, x: 1, y: 1)
                     }
@@ -75,7 +75,9 @@ struct HomeView: View {
                             }
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(red: 55/255, green: 175/255, blue: 166/255))
                     }
                 }
             }
@@ -100,21 +102,18 @@ struct HomeView: View {
             .sheet(isPresented: $isPresentingCatInfoForm) {
                 CatInfoFormView(onSave: { newCat, image in
                     Task {
-                        do {
-                            var catWithImage = newCat
-                            catWithImage.image = image
-                            
-                            await MainActor.run {
-                                cats.append(catWithImage)
-                                selectedCatId = catWithImage.id
-                            }
-                            
-                            try await DataService.shared.saveCats(cats)
-                            print("✅ New cat saved successfully")
-                            
-                        } catch {
-                            print("❌ Error saving new cat: \(error)")
-                            await loadData()
+                        var catWithImage = newCat
+                        catWithImage.image = image
+                        
+                        await MainActor.run {
+                            cats.append(catWithImage)
+                            selectedCatId = catWithImage.id
+                        }
+                        
+                        // 保存到 UserDefaults
+                        if let encodedData = try? JSONEncoder().encode(catWithImage) {
+                            let key = "cat_\(catWithImage.id.uuidString)"
+                            UserDefaults.standard.set(encodedData, forKey: key)
                         }
                     }
                 })
@@ -129,25 +128,31 @@ struct HomeView: View {
     
     // 加载数据
     private func loadData() async {
-        do {
-            let loadedCats = try await DataService.shared.loadCats()
-            await MainActor.run {
-                cats = loadedCats
-                resetViewState()  // 重置视图状态
-                isLoading = false
+        // 从 UserDefaults 加载猫咪数据
+        let keys = UserDefaults.standard.dictionaryRepresentation().keys.filter { $0.hasPrefix("cat_") }
+        let loadedCats = keys.compactMap { key -> Cat? in
+            guard let data = UserDefaults.standard.data(forKey: key),
+                  let cat = try? JSONDecoder().decode(Cat.self, from: data) else {
+                return nil
             }
-        } catch {
-            print("❌ Error loading cats: \(error)")
+            return cat
+        }
+        
+        await MainActor.run {
+            cats = loadedCats
+            resetViewState()  // 重置视图状态
             isLoading = false
         }
     }
     
     // 保存数据
     private func saveData() async {
-        do {
-            try await DataService.shared.saveCats(cats)
-        } catch {
-            print("❌ Error saving cats: \(error)")
+        // 保存每只猫咪到 UserDefaults
+        for cat in cats {
+            if let encodedData = try? JSONEncoder().encode(cat) {
+                let key = "cat_\(cat.id.uuidString)"
+                UserDefaults.standard.set(encodedData, forKey: key)
+            }
         }
     }
     
@@ -161,20 +166,24 @@ struct HomeView: View {
         guard index < cats.count else { return }
         
         Task {
-            do {
-                let catToDelete = cats[index]
-                try await DataService.shared.deleteAllEvents(forCat: catToDelete.id.uuidString)
-                
-                await MainActor.run {
-                    cats.remove(at: index)
-                    resetViewState()
-                }
-                
-                try await DataService.shared.saveCats(cats)
-            } catch {
-                print("❌ Error deleting cat: \(error)")
-                await loadData()
+            let catToDelete = cats[index]
+            
+            await MainActor.run {
+                cats.remove(at: index)
+                resetViewState()
             }
+            
+            // 从 UserDefaults 中删除猫咪数据
+            let key = "cat_\(catToDelete.id.uuidString)"
+            UserDefaults.standard.removeObject(forKey: key)
+            
+            // 删除猫咪的事件数据
+            let eventsKey = "events_\(catToDelete.id.uuidString)"
+            UserDefaults.standard.removeObject(forKey: eventsKey)
+            
+            // 删除猫咪的健康分析数据
+            let analysisKey = "analysis_history_\(catToDelete.id.uuidString)"
+            UserDefaults.standard.removeObject(forKey: analysisKey)
         }
     }
 }

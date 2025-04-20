@@ -14,27 +14,88 @@ struct WeightHistoryView: View {
     }
     
     var body: some View {
-        List {
-            ForEach(sortedRecords) { record in
-                WeightRecordRow(record: record)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedRecord = record
-                    }
-            }
-            .onDelete(perform: deleteWeight)
-            
-            Button(action: {
-                showingAddWeight = true
-            }) {
-                HStack {
+        VStack(spacing: 0) {
+            // 标题部分
+            HStack {
+                Image(systemName: "list.bullet")
+                    .foregroundColor(Theme.mintGreen)
+                Text("Weight Records")
+                    .font(.headline)
+                    .bold()
+                
+                Spacer()
+                
+                Button(action: {
+                    showingAddWeight = true
+                }) {
                     Image(systemName: "plus.circle.fill")
-                    Text("Add New Record")
+                        .foregroundColor(Theme.mintGreen)
+                        .font(.system(size: 24))
+                }
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            
+            // 内容部分
+            ZStack {
+                if sortedRecords.isEmpty {
+                    VStack(spacing: Theme.Spacing.medium) {
+                        Image(systemName: "scale.3d")
+                            .font(.system(size: 40))
+                            .foregroundColor(Theme.mintGreen.opacity(0.8))
+                        Text("No weight records yet")
+                            .foregroundColor(.gray)
+                            .font(.system(.body, design: .rounded))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 1) {  // 将间距改得很小
+                            ForEach(sortedRecords) { record in
+                                WeightRecordRow(record: record)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedRecord = record
+                                    }
+                            }
+                        }
+                        .background(Color(.systemBackground))
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        .padding()
+                    }
                 }
             }
         }
+        .padding(.top, 16)
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Weight History")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Theme.Text.navigationTitle("Weight History")
+            }
+        }
+        .sheet(isPresented: $showingAddWeight) {
+            EditWeightView(
+                date: Date(),
+                weight: sortedRecords.first?.weight ?? 0,
+                existingRecords: cat.weightHistory,
+                onSave: { date, weight in
+                    addWeight(date: date, weight: weight)
+                },
+                isEditing: false
+            )
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle("Add Weight Record")
+                }
+            }
+        }
         .sheet(item: $selectedRecord) { record in
             EditWeightView(
                 date: record.date,
@@ -42,16 +103,10 @@ struct WeightHistoryView: View {
                 existingRecords: cat.weightHistory.filter { $0.id != record.id },
                 onSave: { date, weight in
                     updateRecord(record, date: date, weight: weight)
-                }
-            )
-        }
-        .sheet(isPresented: $showingAddWeight) {
-            EditWeightView(
-                date: Date(),
-                weight: 0,
-                existingRecords: cat.weightHistory,
-                onSave: { date, weight in
-                    addWeight(date: date, weight: weight)
+                },
+                isEditing: true,
+                onDelete: {
+                    deleteWeight(record: record)
                 }
             )
         }
@@ -68,15 +123,6 @@ struct WeightHistoryView: View {
         cat.weightHistory.sort { $0.date < $1.date }
         
         onUpdate(cat)
-        
-        Task {
-            do {
-                try await DataService.shared.saveCats([cat])
-                print("✅ Weight record saved successfully")
-            } catch {
-                print("❌ Error saving weight record: \(error)")
-            }
-        }
     }
     
     private func updateRecord(_ record: WeightRecord, date: Date, weight: Double) {
@@ -92,6 +138,7 @@ struct WeightHistoryView: View {
             breed: cat.breed,
             birthDate: cat.birthDate,
             gender: cat.gender,
+            weight: weight,
             weightHistory: updatedHistory,
             isNeutered: cat.isNeutered,
             image: cat.image,
@@ -100,36 +147,11 @@ struct WeightHistoryView: View {
         
         self.cat = updatedCat
         onUpdate(updatedCat)
-        
-        Task {
-            do {
-                try await DataService.shared.saveCats([updatedCat])
-                print("✅ Weight record updated successfully")
-            } catch {
-                print("❌ Error updating weight record: \(error)")
-            }
-        }
     }
     
-    private func deleteWeight(at offsets: IndexSet) {
-        // 获取要删除的记录
-        let recordsToDelete = offsets.map { sortedRecords[$0] }
-        
-        // 从原始数组中删除对应的记录
-        cat.weightHistory.removeAll { record in
-            recordsToDelete.contains { $0.id == record.id }
-        }
-        
+    private func deleteWeight(record: WeightRecord) {
+        cat.weightHistory.removeAll { $0.id == record.id }
         onUpdate(cat)
-        
-        Task {
-            do {
-                try await DataService.shared.saveCats([cat])
-                print("✅ Weight record deleted successfully")
-            } catch {
-                print("❌ Error deleting weight record: \(error)")
-            }
-        }
     }
 }
 
@@ -138,9 +160,21 @@ struct WeightRecordRow: View {
     
     var body: some View {
         HStack {
-            Text(record.date.formatted(date: .abbreviated, time: .omitted))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+            
             Spacer()
+            
             Text(String(format: "%.1f kg", record.weight))
+                .font(.system(.body, design: .rounded))
+                .foregroundColor(Theme.mintGreen)
+                .bold()
         }
+        .padding()
+        .background(Color(.systemBackground))
+        .contentShape(Rectangle())
     }
 } 

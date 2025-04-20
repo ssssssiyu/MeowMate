@@ -3,7 +3,7 @@ import SwiftUI
 struct EventsView: View {
     let catId: String
     @ObservedObject var viewModel: EventsViewModel
-    @State private var showingAddEvent = false
+    @State private var selectedEvent: Event?
     
     init(catId: String, viewModel: EventsViewModel) {
         self.catId = catId
@@ -11,29 +11,35 @@ struct EventsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             if viewModel.events.isEmpty {
                 Text("No upcoming events")
                     .foregroundColor(.secondary)
-                    .padding(.vertical, 8)
             } else {
                 ForEach(viewModel.events) { event in
                     EventRow(event: event)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedEvent = event
+                        }
                 }
             }
         }
-        .contentShape(Rectangle())  // 确保整个区域可点击
-        .onTapGesture {
-            showingAddEvent = true
-        }
-        .sheet(isPresented: $showingAddEvent) {
+        .sheet(isPresented: $viewModel.showingAddEvent) {
             AddEventView(catId: catId) { event in
-                // 使用 addEvent 方法来保存新事件
                 viewModel.addEvent(event)
             }
         }
-        .onAppear {
-            viewModel.fetchEvents()  // 视图出现时刷新
+        .sheet(item: $selectedEvent) { event in
+            EditEventView(
+                event: event,
+                onUpdate: { updatedEvent in
+                    viewModel.updateEvent(updatedEvent)
+                },
+                onDelete: { event in
+                    viewModel.deleteEvent(event)
+                }
+            )
         }
     }
 }

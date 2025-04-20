@@ -6,7 +6,7 @@ class RecommendationViewModel: ObservableObject {
     @Published var recommendations: [Recommendation] = []
     @Published var recommendedProducts: [PetFoodProduct] = [] {
         didSet {
-            print("recommendedProducts updated: \(recommendedProducts.count)")
+            // Update UI if needed
         }
     }
     
@@ -170,19 +170,11 @@ class RecommendationViewModel: ObservableObject {
         // 设置推荐
         self.recommendations = newRecommendations
         
-        // 打印调试信息
-        print("Life Stage: \(lifeStage)")
-        print("Health Considerations: \(healthConsiderations)")
-        
         // 获取推荐产品时转换回数组
         let healthConsiderationsArray = Array(healthConsiderations)
         
         Task { @MainActor in
             do {
-                print("⭐️ Fetching products with:")
-                print("Life Stage: \(lifeStage)")
-                print("Health Considerations: \(healthConsiderationsArray)")
-                
                 let products = try await productService.fetchPetsmartProducts(
                     lifeStage: lifeStage,
                     healthConsiderations: healthConsiderationsArray
@@ -192,10 +184,9 @@ class RecommendationViewModel: ObservableObject {
                 await MainActor.run {
                     self.recommendedProducts = products
                     self.objectWillChange.send()
-                    print("Products updated on main thread: \(self.recommendedProducts.count)")
                 }
             } catch {
-                print("❌ Error fetching products: \(error)")
+                // Handle error if needed
             }
         }
     }

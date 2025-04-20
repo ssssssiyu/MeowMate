@@ -19,6 +19,7 @@ struct AddEventView: View {
                 Section {
                     TextField("Event Name", text: $eventName)
                     DatePicker("Date", selection: $eventDate, displayedComponents: [.date])
+                        .tint(Theme.mintGreen)
                 }
                 
                 Section(header: Text("Reminders (Optional)")) {
@@ -33,22 +34,27 @@ struct AddEventView: View {
                                 }
                             }
                         ))
+                        .tint(Theme.mintGreen)
                     }
                 }
             }
-            .navigationTitle("Add Event")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle("Add Event")
+                }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveEvent()
                     }
                     .disabled(eventName.isEmpty)
+                    .foregroundColor(eventName.isEmpty ? .gray : Theme.mintGreen)
                 }
             }
         }

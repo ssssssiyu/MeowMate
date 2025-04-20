@@ -12,7 +12,7 @@ enum DiseaseCategory: String, Codable, CaseIterable {
     
     var systemImage: String {
         switch self {
-        case .digestive: return "stomach"
+        case .digestive: return "pill"
         case .urinary: return "drop"
         case .respiratory: return "lungs"
         case .skin: return "allergens"
@@ -30,9 +30,9 @@ struct Disease: Identifiable, Codable {
     let description: String
     let symptoms: [String]
     let category: DiseaseCategory
-    let recommendation: DietaryRecommendation
+    let recommendation: CareAdvice
     
-    struct DietaryRecommendation: Codable {
+    struct CareAdvice: Codable {
         let title: String
         let description: String
         let priority: Priority
@@ -44,7 +44,7 @@ struct Disease: Identifiable, Codable {
         }
     }
     
-    init(id: UUID = UUID(), name: String, description: String, symptoms: [String] = [], category: DiseaseCategory, recommendation: DietaryRecommendation) {
+    init(id: UUID = UUID(), name: String, description: String, symptoms: [String] = [], category: DiseaseCategory, recommendation: CareAdvice) {
         self.id = id
         self.name = name
         self.description = description

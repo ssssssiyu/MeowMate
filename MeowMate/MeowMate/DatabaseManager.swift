@@ -13,7 +13,7 @@ class DatabaseManager {
             db = try Connection(databasePath)
             createTables()
         } catch {
-            print("无法连接到数据库: \(error)")
+            // Database connection error
         }
     }
 

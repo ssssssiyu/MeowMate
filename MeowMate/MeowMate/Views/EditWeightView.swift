@@ -5,43 +5,56 @@ struct EditWeightView: View {
     
     let existingRecords: [WeightRecord]
     let onSave: (Date, Double) -> Void
+    let isEditing: Bool
+    let onDelete: (() -> Void)?  // 添加删除回调
     
     @State private var selectedDate: Date
     @State private var wholeNumber: Int
     @State private var decimal: Int
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var showingDeleteAlert = false  // 添加删除确认弹窗状态
     
     // 添加最大日期限制
     private var maxDate: Date {
         Date()  // 当前日期作为最大值
     }
     
-    init(date: Date, weight: Double, existingRecords: [WeightRecord], onSave: @escaping (Date, Double) -> Void) {
+    init(date: Date, weight: Double, existingRecords: [WeightRecord], onSave: @escaping (Date, Double) -> Void, isEditing: Bool = false, onDelete: (() -> Void)? = nil) {
         self.existingRecords = existingRecords
         self.onSave = onSave
+        self.isEditing = isEditing
+        self.onDelete = onDelete
         _selectedDate = State(initialValue: date)
         _wholeNumber = State(initialValue: Int(weight))
         _decimal = State(initialValue: Int((weight.truncatingRemainder(dividingBy: 1)) * 10))
+        
+        // 设置日期选择器的主题色
+        UIDatePicker.appearance().tintColor = UIColor(Theme.mintGreen)
     }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // 日期选择器部分
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Select Date")
                         .font(.headline)
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
                     
-                    DatePicker("", selection: $selectedDate, 
-                             in: ...maxDate,  // 添加日期范围限制
-                             displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .padding(.horizontal)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
+                    HStack {
+                        Text("Date")
+                            .foregroundColor(.primary)
+                        Spacer()
+                        DatePicker("", selection: $selectedDate,
+                                 in: ...maxDate,
+                                 displayedComponents: .date)
+                        .labelsHidden()
+                        .tint(Theme.mintGreen)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
                 }
                 .padding()
                 
@@ -81,26 +94,59 @@ struct EditWeightView: View {
                 .padding()
                 
                 Spacer()
+                
+                // 删除按钮，只在编辑模式下显示
+                if isEditing {
+                    Button(action: {
+                        showingDeleteAlert = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Record")
+                        }
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                    }
+                    .padding()
+                }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Edit Weight Record")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle(isEditing ? "Edit Weight" : "Add Weight")
+                }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveWeight()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
             }
             .alert("Invalid Input", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
+            }
+            .alert("Delete Record", isPresented: $showingDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    if let onDelete = onDelete {
+                        onDelete()
+                        dismiss()
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete this weight record? This action cannot be undone.")
             }
         }
     }
@@ -115,8 +161,12 @@ struct EditWeightView: View {
         
         // 检查是否已存在同一天的记录
         let calendar = Calendar.current
-        if existingRecords.contains(where: { calendar.isDate($0.date, inSameDayAs: selectedDate) }) {
-            alertMessage = "A weight record already exists for this date"
+        let existingSameDay = existingRecords.contains { record in
+            calendar.isDate(record.date, inSameDayAs: selectedDate)
+        }
+        
+        if existingSameDay {
+            alertMessage = "A weight record for this date already exists"
             showingAlert = true
             return
         }

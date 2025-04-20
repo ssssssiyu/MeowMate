@@ -27,10 +27,8 @@ struct WeightView: View {
                 .document(catId)
                 .collection("weights")
                 .document(record.id.uuidString)
-                .delete() { err in
-                    if let err = err {
-                        print("Error removing weight record: \(err)")
-                    }
+                .delete() { _ in
+                    // Handle completion if needed
                 }
         }
         

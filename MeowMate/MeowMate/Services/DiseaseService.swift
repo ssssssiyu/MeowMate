@@ -8,8 +8,8 @@ class DiseaseService {
     public let commonDiseases: [Disease] = [
         // 消化系统
         Disease(
-            name: "Hairballs",
-            description: "Common in cats, especially long-haired breeds.",
+            name: "Hairball Syndrome",
+            description: "More frequent in long-haired breeds, causing digestive discomfort.",
             symptoms: ["Vomiting", "Lethargy", "Loss of appetite", "Constipation"],
             category: .digestive,
             recommendation: .init(
@@ -24,8 +24,8 @@ class DiseaseService {
             symptoms: ["Chronic vomiting", "Diarrhea", "Weight loss", "Poor appetite"],
             category: .digestive,
             recommendation: .init(
-                title: "Diet Modification",
-                description: "Hypoallergenic food, easily digestible diet",
+                title: "Diet and Medication",
+                description: "Hypoallergenic food and prescribed medications as needed",
                 priority: .high
             )
         ),
@@ -35,8 +35,8 @@ class DiseaseService {
             symptoms: ["Vomiting", "Decreased appetite", "Weight loss", "Abdominal pain"],
             category: .digestive,
             recommendation: .init(
-                title: "Gastric Support",
-                description: "Bland diet, small frequent meals",
+                title: "Rest and Diet Control",
+                description: "Small frequent meals and temporary fasting if recommended",
                 priority: .medium
             )
         ),
@@ -48,8 +48,8 @@ class DiseaseService {
             symptoms: ["Frequent urination", "Blood in urine", "Straining to urinate"],
             category: .urinary,
             recommendation: .init(
-                title: "Urinary Health",
-                description: "Increase water intake, special urinary diet",
+                title: "Hydration and Treatment",
+                description: "Increase water intake and complete prescribed antibiotics",
                 priority: .high
             )
         ),
@@ -59,8 +59,8 @@ class DiseaseService {
             symptoms: ["Pain", "Blood in urine", "Reduced urination"],
             category: .urinary,
             recommendation: .init(
-                title: "Stone Prevention",
-                description: "Special diet to prevent stone formation",
+                title: "Prevention and Care",
+                description: "Special diet, increased water intake, and regular check-ups",
                 priority: .high
             )
         ),
@@ -70,8 +70,8 @@ class DiseaseService {
             symptoms: ["Frequent urination", "Urinating outside litter box", "Discomfort"],
             category: .urinary,
             recommendation: .init(
-                title: "Crystal Management",
-                description: "pH-balanced diet, increased water intake",
+                title: "Diet and Environment",
+                description: "pH-balanced diet and clean, accessible litter boxes",
                 priority: .medium
             )
         ),
@@ -83,8 +83,8 @@ class DiseaseService {
             symptoms: ["Sneezing", "Runny nose", "Watery eyes", "Loss of appetite", "Fever"],
             category: .respiratory,
             recommendation: .init(
-                title: "Respiratory Support",
-                description: "Easily digestible food, increased fluid intake",
+                title: "Rest and Support",
+                description: "Keep warm, clean nose/eyes, and maintain good nutrition",
                 priority: .high
             )
         ),
@@ -94,8 +94,8 @@ class DiseaseService {
             symptoms: ["Coughing", "Wheezing", "Difficulty breathing", "Open-mouth breathing"],
             category: .respiratory,
             recommendation: .init(
-                title: "Respiratory Care",
-                description: "Low-dust diet and environment, omega-3 supplements",
+                title: "Environment and Treatment",
+                description: "Reduce triggers, maintain clean air, and follow medication plan",
                 priority: .high
             )
         ),
@@ -105,8 +105,8 @@ class DiseaseService {
             symptoms: ["Persistent cough", "Breathing difficulty", "Lethargy", "Reduced appetite"],
             category: .respiratory,
             recommendation: .init(
-                title: "Bronchial Support",
-                description: "Soft, moist food and immune-supporting supplements",
+                title: "Rest and Treatment",
+                description: "Humidified environment and prescribed medications",
                 priority: .medium
             )
         ),
@@ -118,8 +118,8 @@ class DiseaseService {
             symptoms: ["Excessive scratching", "Hair loss", "Red skin", "Scabs"],
             category: .skin,
             recommendation: .init(
-                title: "Allergy Management",
-                description: "Hypoallergenic diet, regular grooming",
+                title: "Environment and Diet",
+                description: "Identify triggers, regular grooming, and special diet",
                 priority: .medium
             )
         ),
@@ -129,8 +129,8 @@ class DiseaseService {
             symptoms: ["Itching", "Skin redness", "Hair loss", "Ear infections"],
             category: .skin,
             recommendation: .init(
-                title: "Allergy Management",
-                description: "Hypoallergenic diet, elimination trial",
+                title: "Diet Management",
+                description: "Elimination diet trial and avoid identified triggers",
                 priority: .medium
             )
         ),
@@ -140,8 +140,8 @@ class DiseaseService {
             symptoms: ["Intense itching", "Scabs", "Hair loss", "Skin inflammation"],
             category: .skin,
             recommendation: .init(
-                title: "Skin Health",
-                description: "Anti-inflammatory diet, omega-3 supplements",
+                title: "Prevention and Treatment",
+                description: "Regular flea prevention and environmental cleaning",
                 priority: .medium
             )
         ),
@@ -151,8 +151,8 @@ class DiseaseService {
             symptoms: ["Chronic itching", "Face rubbing", "Excessive grooming", "Skin lesions"],
             category: .skin,
             recommendation: .init(
-                title: "Skin Support",
-                description: "Skin-supporting supplements, balanced diet",
+                title: "Environment and Care",
+                description: "Reduce allergens and maintain skin barrier health",
                 priority: .medium
             )
         ),
@@ -164,8 +164,8 @@ class DiseaseService {
             symptoms: ["Bad breath", "Drooling", "Difficulty eating", "Red or swollen gums"],
             category: .dental,
             recommendation: .init(
-                title: "Dental Health",
-                description: "Dental treats, specialized dental diet",
+                title: "Dental Care",
+                description: "Regular teeth cleaning and dental health monitoring",
                 priority: .medium
             )
         ),
@@ -175,8 +175,8 @@ class DiseaseService {
             symptoms: ["Red gums", "Bleeding gums", "Bad breath", "Drooling"],
             category: .dental,
             recommendation: .init(
-                title: "Gum Health",
-                description: "Dental-specific dry food, enzymatic treats",
+                title: "Oral Health",
+                description: "Daily oral care and professional cleaning when needed",
                 priority: .medium
             )
         ),
@@ -186,8 +186,8 @@ class DiseaseService {
             symptoms: ["Difficulty eating", "Mouth pain", "Drooling", "Bleeding"],
             category: .dental,
             recommendation: .init(
-                title: "Dental Care",
-                description: "Soft food diet, calcium supplements",
+                title: "Pain Management",
+                description: "Soft food and dental treatment as recommended",
                 priority: .high
             )
         ),
@@ -199,8 +199,8 @@ class DiseaseService {
             symptoms: ["Increased thirst", "Frequent urination", "Weight loss", "Increased appetite"],
             category: .metabolic,
             recommendation: .init(
-                title: "Diabetes Management",
-                description: "Special diabetic diet, regular feeding schedule",
+                title: "Daily Management",
+                description: "Regular insulin, consistent feeding schedule, and monitoring",
                 priority: .high
             )
         ),
@@ -211,7 +211,7 @@ class DiseaseService {
             category: .metabolic,
             recommendation: .init(
                 title: "Weight Management",
-                description: "Portion-controlled diet, low-calorie food",
+                description: "Portion control and increased physical activity",
                 priority: .medium
             )
         ),
@@ -221,8 +221,8 @@ class DiseaseService {
             symptoms: ["Weight loss", "Increased appetite", "Hyperactivity", "Vomiting"],
             category: .metabolic,
             recommendation: .init(
-                title: "Thyroid Management",
-                description: "Iodine-controlled diet, frequent small meals",
+                title: "Treatment Plan",
+                description: "Medication, diet adjustment, and regular monitoring",
                 priority: .high
             )
         ),
@@ -234,8 +234,8 @@ class DiseaseService {
             symptoms: ["Difficulty jumping", "Limping", "Reduced activity", "Irritability when touched"],
             category: .musculoskeletal,
             recommendation: .init(
-                title: "Joint Support",
-                description: "Joint supplements, easy access to resources",
+                title: "Comfort and Support",
+                description: "Easy access to resources and pain management",
                 priority: .medium
             )
         ),
@@ -245,8 +245,8 @@ class DiseaseService {
             symptoms: ["Limping", "Reduced jumping", "Difficulty climbing", "Pain"],
             category: .musculoskeletal,
             recommendation: .init(
-                title: "Joint Support",
-                description: "Glucosamine supplements, omega-3 rich diet",
+                title: "Activity Management",
+                description: "Gentle exercise and environmental modifications",
                 priority: .medium
             )
         ),
@@ -256,8 +256,8 @@ class DiseaseService {
             symptoms: ["Joint stiffness", "Reduced mobility", "Pain", "Behavioral changes"],
             category: .musculoskeletal,
             recommendation: .init(
-                title: "Arthritis Care",
-                description: "Anti-inflammatory diet, joint supplements",
+                title: "Pain and Mobility",
+                description: "Pain relief, comfortable resting areas, and easy access",
                 priority: .high
             )
         )
@@ -313,12 +313,6 @@ class DiseaseService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        // 调试日志
-        print("Response Headers:", (response as? HTTPURLResponse)?.allHeaderFields ?? [:])
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("Raw API Response:", responseString)
-        }
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NSError(
                 domain: "DiseaseService",
@@ -369,8 +363,6 @@ class DiseaseService {
             let diseaseResponse = try JSONDecoder().decode(OpenAIDiseaseResponse.self, from: jsonData)
             return diseaseResponse.diseases
         } catch {
-            print("JSON Decoding Error:", error)
-            print("Attempted to decode:", jsonString)
             throw NSError(
                 domain: "DiseaseService",
                 code: -5,

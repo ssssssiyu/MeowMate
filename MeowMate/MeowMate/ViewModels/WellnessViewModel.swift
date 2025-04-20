@@ -52,7 +52,7 @@ class WellnessViewModel: ObservableObject {
             
             Note: If a kitten has blood in urine, it's more urgent - seek immediate veterinary care!
             """,
-        
+            
         "Vomiting": """
             Vomiting can be caused by various factors:
             
@@ -82,7 +82,7 @@ class WellnessViewModel: ObservableObject {
             - Accompanied by lethargy
             - Combined with diarrhea or fever
             """,
-        
+            
         "Diarrhea": """
             Diarrhea is a common digestive symptom to monitor:
             
@@ -173,24 +173,54 @@ class WellnessViewModel: ObservableObject {
     init(cat: Cat) {
         self.cat = cat
         self.diseases = diseaseService.commonDiseases
-        
-        // 设置实时监听
-        setupAnalysisListener()
+        loadAnalysisHistory()
     }
     
-    private func setupAnalysisListener() {
-        Task {
-            do {
-                try await DataService.shared.listenToHealthAnalyses(forCat: cat.id) { [weak self] analyses in
-                    Task { @MainActor in
-                        self?.analysisHistory = analyses
-                    }
-                }
-            } catch {
-                print("❌ Failed to setup analysis listener:", error)
-                self.error = error
+    private func loadAnalysisHistory() {
+        let key = "analysis_history_\(cat.id.uuidString)"
+        if let data = UserDefaults.standard.data(forKey: key),
+           let history = try? JSONDecoder().decode([HealthAnalysis].self, from: data) {
+            // 按日期排序，最新的在前面
+            self.analysisHistory = history.sorted { $0.date > $1.date }
+            
+            // 只保留最近3条记录
+            if self.analysisHistory.count > 3 {
+                self.analysisHistory = Array(self.analysisHistory.prefix(3))
+                saveAnalysisHistory()  // 保存更新后的记录
             }
         }
+    }
+    
+    private func saveAnalysisHistory() {
+        let key = "analysis_history_\(cat.id.uuidString)"
+        if let data = try? JSONEncoder().encode(analysisHistory) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+    
+    func addAnalysis(_ analysis: HealthAnalysis) {
+        // 添加新记录到开头
+        analysisHistory.insert(analysis, at: 0)
+        
+        // 只保留最近3条记录
+        if analysisHistory.count > 3 {
+            analysisHistory = Array(analysisHistory.prefix(3))
+        }
+        
+        saveAnalysisHistory()
+    }
+    
+    // 获取最近一个月的健康记录
+    func getRecentHealthRecords() -> [HealthAnalysis] {
+        let oneMonthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+        return analysisHistory.filter { $0.date >= oneMonthAgo }
+    }
+    
+    // 删除所有健康分析记录
+    func deleteAllAnalyses() {
+        let key = "analysis_history_\(cat.id.uuidString)"
+        UserDefaults.standard.removeObject(forKey: key)
+        analysisHistory = []
     }
     
     func updateHealthTips() {
@@ -211,6 +241,21 @@ class WellnessViewModel: ObservableObject {
     func getAIAdvice(symptoms: Set<CommonSymptoms>) async throws -> AIResponse? {
         isLoading = true
         defer { isLoading = false }
+        
+        // 检查 API 密钥
+        let apiKey = APIConfig.openAIKey
+        if apiKey.isEmpty {
+            print("❌ OpenAI API key is empty")
+            throw NSError(domain: "WellnessViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI API key is not configured"])
+        }
+        
+        // 打印环境变量信息
+        print("🌍 Environment Variables:")
+        ProcessInfo.processInfo.environment.forEach { key, value in
+            if key.contains("API") {
+                print("   \(key): \(value.prefix(5))...")  // 只打印前5个字符
+            }
+        }
         
         let symptomStrings = symptoms.map { $0.rawValue }
         
@@ -296,9 +341,17 @@ class WellnessViewModel: ObservableObject {
         """
         
         do {
-            var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
+            print("🔍 Sending request to OpenAI API...")
+            print("📝 Prompt: \(prompt)")
+            
+            guard let url = URL(string: APIConfig.OpenAI.endpoint) else {
+                print("❌ Invalid OpenAI endpoint URL")
+                throw NSError(domain: "WellnessViewModel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid OpenAI endpoint URL"])
+            }
+            
+            var request = URLRequest(url: url)
             request.httpMethod = "POST"
-            request.setValue("Bearer \(APIConfig.openAIKey)", forHTTPHeaderField: "Authorization")
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             
             let requestBody: [String: Any] = [
@@ -307,22 +360,36 @@ class WellnessViewModel: ObservableObject {
                     ["role": "system", "content": "You are a professional veterinarian. Only respond with the exact JSON format specified. No other text."],
                     ["role": "user", "content": prompt]
                 ],
-                "temperature": 0.3  // 降低温度以获得更一致的输出
+                "temperature": 0.3
             ]
             
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             
-            let (data, _) = try await URLSession.shared.data(for: request)
+            print("📤 Request headers: \(request.allHTTPHeaderFields ?? [:])")
+            print("📤 Request body: \(String(data: request.httpBody!, encoding: .utf8) ?? "")")
+            
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📥 HTTP Status Code: \(httpResponse.statusCode)")
+                if httpResponse.statusCode != 200 {
+                    print("❌ HTTP Error: \(httpResponse.statusCode)")
+                    if let errorString = String(data: data, encoding: .utf8) {
+                        print("❌ Error Response: \(errorString)")
+                    }
+                    throw NSError(domain: "WellnessViewModel", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP Error: \(httpResponse.statusCode)"])
+                }
+            }
             
             // 添加调试信息
             if let responseString = String(data: data, encoding: .utf8) {
-                print("API Response: \(responseString)")
+                print("📥 API Response: \(responseString)")
             }
             
-            let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+            let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
             
-            if let content = response.choices.first?.message.content {
-                print("GPT Content: \(content)")
+            if let content = openAIResponse.choices.first?.message.content {
+                print("🤖 GPT Content: \(content)")
                 
                 if let jsonData = content.data(using: .utf8),
                    let aiResponse = try? JSONDecoder().decode(AIResponse.self, from: jsonData) {
@@ -330,14 +397,19 @@ class WellnessViewModel: ObservableObject {
                         self.aiResponse = aiResponse
                     }
                     return aiResponse
+                } else {
+                    print("❌ Failed to decode AI response")
+                    throw NSError(domain: "WellnessViewModel", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode AI response"])
                 }
+            } else {
+                print("❌ No content in OpenAI response")
+                throw NSError(domain: "WellnessViewModel", code: -3, userInfo: [NSLocalizedDescriptionKey: "No content in OpenAI response"])
             }
         } catch {
             print("❌ AI API Error: \(error)")
             self.error = error
+            throw error
         }
-        
-        return nil
     }
     
     private func formatWeightHistory() -> String {
