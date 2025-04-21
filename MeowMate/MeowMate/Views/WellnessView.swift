@@ -63,6 +63,19 @@ struct WellnessView: View {
                 viewModel.updateHealthTips()
             }
             viewModel.diseases = viewModel.diseaseService.commonDiseases
+            Task {
+                do {
+                    let history = try await DataService.shared.fetchHealthAnalyses(forCat: cat.id)
+                    await MainActor.run {
+                        viewModel.analysisHistory = history.sorted { $0.date > $1.date }
+                        if viewModel.analysisHistory.count > 5 {
+                            viewModel.analysisHistory = Array(viewModel.analysisHistory.prefix(5))
+                        }
+                    }
+                } catch {
+                    viewModel.error = error
+                }
+            }
         }
         .alert("Error", isPresented: .constant(viewModel.error != nil)) {
             Button("OK", role: .cancel) {
@@ -127,6 +140,7 @@ struct HealthAnalysisTab: View {
                         try await DataService.shared.deleteAllHealthAnalyses(forCat: cat.id)
                         await MainActor.run {
                             viewModel.analysisHistory = []
+                            viewModel.selectedSymptoms = []
                         }
                     } catch {
                         viewModel.error = error
@@ -317,7 +331,7 @@ struct DiseaseDetailView: View {
                     VStack(spacing: 16) {
                         // 标题部分
                         Text(disease.name)
-                            .font(.system(size: 24))
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.primary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.horizontal)
@@ -480,45 +494,55 @@ struct AIAdviceView: View {
                         ProgressView()
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if let response = viewModel.aiResponse {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 20) {
                             Text("Possible Causes")
                                 .font(.headline)
+                                .foregroundColor(Theme.mintGreen)
                             ForEach(response.possibleConditions, id: \.self) { condition in
                                 Text("• \(condition)")
+                                    .font(.body)
                             }
                         }
                         
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 20) {
                             Text("Advice")
                                 .font(.headline)
+                                .foregroundColor(Theme.mintGreen)
                             ForEach(response.recommendations, id: \.self) { recommendation in
                                 Text("• \(recommendation)")
+                                    .font(.body)
                             }
                         }
                         
                         HStack {
                             Text("Care Level:")
                                 .font(.headline)
+                                .foregroundColor(Theme.mintGreen)
                             Text(response.urgencyLevel.rawValue)
+                                .font(.headline)
                                 .foregroundColor(urgencyColor(response.urgencyLevel))
-                                .bold()
                         }
                         
                         Text("Note: These suggestions are for reference only. Please consult a veterinarian if concerned.")
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundColor(.secondary)
                             .padding(.top)
                     }
                 }
                 .padding()
             }
+            .padding()
             .navigationTitle("AI Health Advice")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle("AI Health Advice")
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Close") {
                         dismiss()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
             }
             .task {
@@ -534,7 +558,7 @@ struct AIAdviceView: View {
                             recommendations: response.recommendations,
                             urgencyLevel: response.urgencyLevel.rawValue,
                             catInfo: .init(
-                                age: Calendar.current.dateComponents([.year], from: viewModel.cat.birthDate, to: Date()).year ?? 0,
+                                ageInMonths: Calendar.current.dateComponents([.month], from: viewModel.cat.birthDate, to: Date()).month ?? 0,
                                 weight: viewModel.cat.weight,
                                 breed: viewModel.cat.breed,
                                 isNeutered: viewModel.cat.isNeutered
@@ -581,11 +605,8 @@ struct SymptomBubble: View {
                 Capsule()
                     .stroke(isSelected ? Theme.mintGreen : Color.gray.opacity(0.3), lineWidth: 1)
             )
-            .animation(.spring(response: 0.3), value: isSelected)
             .onTapGesture {
-                withAnimation {
-                    isSelected.toggle()
-                }
+                isSelected.toggle()
             }
     }
 }

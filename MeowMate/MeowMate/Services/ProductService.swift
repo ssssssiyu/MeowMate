@@ -31,34 +31,13 @@ class ProductService {
                 return nil
             }
             
-            guard let productHealthConsideration = data["health_consideration"] as? String else {
-                return nil
-            }
-            
-            let productHealthArray = productHealthConsideration
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-            
-            let hasMatchingHealth = !healthConsiderations.isEmpty ? 
-                healthConsiderations.contains { consideration in
-                    productHealthArray.contains { $0.contains(consideration) }
-                } : true
-            
-            if !hasMatchingHealth {
-                return nil
-            }
-            
             return PetFoodProduct(
                 id: document.documentID,
                 name: data["name"] as? String ?? "",
-                price: data["price"] as? Double ?? 0.0,
                 link: data["link"] as? String ?? "",
-                foodType: data["food_type"] as? String ?? "",
-                flavor: data["flavor"] as? String ?? "",
-                healthConsideration: productHealthConsideration,
-                nutritionalOption: data["nutritional_option"] as? String ?? "",
-                breedSize: data["breed_size"] as? String ?? "",
-                lifeStage: productLifeStage
+                lifeStage: productLifeStage,
+                brand: data["brand"] as? String,
+                flavor: data["flavor"] as? String
             )
         }
         

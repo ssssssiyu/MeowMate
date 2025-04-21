@@ -57,6 +57,7 @@ struct EditEventView: View {
                             Image(systemName: "trash")
                             Text("Delete Event")
                         }
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
             }

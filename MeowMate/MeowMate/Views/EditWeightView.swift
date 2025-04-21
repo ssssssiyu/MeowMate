@@ -93,8 +93,6 @@ struct EditWeightView: View {
                 }
                 .padding()
                 
-                Spacer()
-                
                 // 删除按钮，只在编辑模式下显示
                 if isEditing {
                     Button(action: {
@@ -110,8 +108,11 @@ struct EditWeightView: View {
                         .background(Color(.systemBackground))
                         .cornerRadius(12)
                     }
-                    .padding()
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
+                
+                Spacer()
             }
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)

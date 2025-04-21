@@ -12,13 +12,14 @@ struct HealthAnalysis: Identifiable, Codable {
     let catInfo: CatSnapshot  // 记录分析时的猫咪状态
     
     struct CatSnapshot: Codable {
-        let age: Int
+        let ageInMonths: Int  // 改用月份作为基本单位
         let weight: Double
         let breed: String
         let isNeutered: Bool
         
         enum CodingKeys: String, CodingKey {
-            case age, weight, breed, isNeutered
+            case ageInMonths = "age"  // 保持向后兼容性
+            case weight, breed, isNeutered
         }
     }
     

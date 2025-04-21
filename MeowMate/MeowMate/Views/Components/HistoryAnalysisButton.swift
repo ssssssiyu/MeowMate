@@ -10,7 +10,7 @@ struct HistoryAnalysisButton: View {
                 // 时间和紧急程度
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
-                        .foregroundColor(.blue)
+                        .foregroundColor(mintGreen)
                     Text(DateFormatter.mediumStyle.string(from: analysis.date))
                         .font(.caption)
                         .foregroundColor(.gray)
@@ -29,11 +29,11 @@ struct HistoryAnalysisButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.blue.opacity(0.05))
+            .background(mintGreen.opacity(0.05))
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.blue.opacity(0.1), lineWidth: 1)
+                    .stroke(mintGreen.opacity(0.1), lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())

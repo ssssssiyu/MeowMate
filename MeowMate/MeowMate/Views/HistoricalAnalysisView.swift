@@ -12,8 +12,10 @@ struct HistoricalAnalysisView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Symptoms")
                             .font(.headline)
+                            .foregroundColor(Theme.mintGreen)
                         ForEach(analysis.symptoms, id: \.self) { symptom in
                             Text("• \(symptom)")
+                                .font(.body)
                         }
                     }
                     
@@ -21,8 +23,10 @@ struct HistoricalAnalysisView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Possible Conditions")
                             .font(.headline)
+                            .foregroundColor(Theme.mintGreen)
                         ForEach(analysis.possibleConditions, id: \.self) { condition in
                             Text("• \(condition)")
+                                .font(.body)
                         }
                     }
                     
@@ -30,8 +34,10 @@ struct HistoricalAnalysisView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Advice")
                             .font(.headline)
+                            .foregroundColor(Theme.mintGreen)
                         ForEach(analysis.recommendations, id: \.self) { recommendation in
                             Text("• \(recommendation)")
+                                .font(.body)
                         }
                     }
                     
@@ -39,17 +45,10 @@ struct HistoricalAnalysisView: View {
                     HStack {
                         Text("Care Level:")
                             .font(.headline)
+                            .foregroundColor(Theme.mintGreen)
                         Text(analysis.urgencyLevel)
-                            .foregroundColor(urgencyColor(analysis.urgencyLevel))
-                            .bold()
-                    }
-                    
-                    // 猫咪当时的状态
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Cat's Status")
                             .font(.headline)
-                        Text("Age: \(analysis.catInfo.age) years")
-                        Text("Weight: \(String(format: "%.1f", analysis.catInfo.weight)) kg")
+                            .foregroundColor(urgencyColor(analysis.urgencyLevel))
                     }
                 }
                 .padding()
@@ -57,10 +56,14 @@ struct HistoricalAnalysisView: View {
             .navigationTitle("Analysis History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Theme.Text.navigationTitle("Analysis History")
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Close") {
                         dismiss()
                     }
+                    .foregroundColor(Theme.mintGreen)
                 }
             }
         }

@@ -11,7 +11,7 @@ struct AIAnalysisSection: View {
             )
             
             if !viewModel.analysisHistory.isEmpty {
-                ForEach(viewModel.analysisHistory.prefix(3)) { analysis in
+                ForEach(viewModel.analysisHistory.prefix(5)) { analysis in
                     HistoryAnalysisButton(
                         analysis: analysis,
                         action: { viewModel.showHistoricalAnalysis(analysis) }

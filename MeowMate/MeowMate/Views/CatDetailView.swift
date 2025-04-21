@@ -59,7 +59,8 @@ struct CatDetailView: View {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text(displayedCat.breed)
                                             .font(.subheadline)
-                                        Text("\(Calendar.current.dateComponents([.year], from: displayedCat.birthDate, to: Date()).year ?? 0) years")
+                                        let ageComponents = Calendar.current.dateComponents([.year, .month], from: displayedCat.birthDate, to: Date())
+                                        Text(ageComponents.year ?? 0 >= 1 ? "\(ageComponents.year ?? 0) years" : "\(ageComponents.month ?? 0) months")
                                             .font(.subheadline)
                                         Text(displayedCat.gender.rawValue)
                                             .font(.subheadline)
@@ -230,8 +231,25 @@ struct CatDetailView: View {
                             
                             Spacer()
                             
-                            Text("\(recommendationViewModel.recommendations.count) tips")
-                                .font(.subheadline)
+                            NavigationLink(destination: ProductFilterView(
+                                recommendation: recommendationViewModel.recommendations.first ?? RecommendationViewModel.Recommendation(
+                                    title: "Pet Food",
+                                    description: "",
+                                    type: .food,
+                                    priority: .medium
+                                ),
+                                products: recommendationViewModel.recommendedProducts
+                            )) {
+                                Text("Filter")
+                                    .font(.subheadline)
+                                    .foregroundColor(mintGreen)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 1)
+                                    .background(
+                                        Capsule()
+                                            .stroke(mintGreen, lineWidth: 1)
+                                    )
+                            }
                         }
                         .padding(.bottom, 4)
                         
@@ -416,7 +434,7 @@ struct WellnessCard: View {
                         .lineLimit(6)
                         .truncationMode(.tail)
                 } else {
-                    Text("Long press to add health issues")
+                    Text("Tap to add health issues")
                         .font(.callout)
                         .foregroundColor(.secondary)
                         .padding(.vertical, 4)
@@ -429,6 +447,19 @@ struct WellnessCard: View {
             .shadow(radius: 2)
         }
         .buttonStyle(PlainButtonStyle())
+        .task {
+            do {
+                let history = try await DataService.shared.fetchHealthAnalyses(forCat: cat.id)
+                await MainActor.run {
+                    viewModel.analysisHistory = history.sorted { $0.date > $1.date }
+                    if viewModel.analysisHistory.count > 5 {
+                        viewModel.analysisHistory = Array(viewModel.analysisHistory.prefix(5))
+                    }
+                }
+            } catch {
+                print("Error loading health analyses: \(error)")
+            }
+        }
     }
     
     private func urgencyColor(_ urgency: String) -> Color {

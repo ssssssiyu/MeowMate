@@ -183,9 +183,9 @@ class WellnessViewModel: ObservableObject {
             // 按日期排序，最新的在前面
             self.analysisHistory = history.sorted { $0.date > $1.date }
             
-            // 只保留最近3条记录
-            if self.analysisHistory.count > 3 {
-                self.analysisHistory = Array(self.analysisHistory.prefix(3))
+            // 只保留最近5条记录
+            if self.analysisHistory.count > 5 {
+                self.analysisHistory = Array(self.analysisHistory.prefix(5))
                 saveAnalysisHistory()  // 保存更新后的记录
             }
         }
@@ -202,9 +202,9 @@ class WellnessViewModel: ObservableObject {
         // 添加新记录到开头
         analysisHistory.insert(analysis, at: 0)
         
-        // 只保留最近3条记录
-        if analysisHistory.count > 3 {
-            analysisHistory = Array(analysisHistory.prefix(3))
+        // 只保留最近5条记录
+        if analysisHistory.count > 5 {
+            analysisHistory = Array(analysisHistory.prefix(5))
         }
         
         saveAnalysisHistory()
@@ -249,14 +249,6 @@ class WellnessViewModel: ObservableObject {
             throw NSError(domain: "WellnessViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI API key is not configured"])
         }
         
-        // 打印环境变量信息
-        print("🌍 Environment Variables:")
-        ProcessInfo.processInfo.environment.forEach { key, value in
-            if key.contains("API") {
-                print("   \(key): \(value.prefix(5))...")  // 只打印前5个字符
-            }
-        }
-        
         let symptomStrings = symptoms.map { $0.rawValue }
         
         // 创建历史记录上下文，只包含最近两周的记录
@@ -264,7 +256,7 @@ class WellnessViewModel: ObservableObject {
         let recentHistory = analysisHistory
             .filter { $0.date > twoWeeksAgo }  // 只保留两周内的记录
             .sorted { $0.date > $1.date }
-            .prefix(3)
+            .prefix(5)  // 使用所有存储的记录（最多5条）
             .map { analysis in
                 """
                 Previous Analysis (\(formatDate(analysis.date))):
@@ -310,24 +302,53 @@ class WellnessViewModel: ObservableObject {
         
         Instructions:
         1. Analyze the symptoms and identify possible underlying medical conditions (not the symptoms themselves)
-        2. Common symptom combinations to consider:
+        
+        2. Consider breed-specific risks:
+           - Persian/Himalayan: More susceptible to respiratory issues and eye problems
+           - Maine Coon: Higher risk of heart disease and hip dysplasia
+           - Siamese: More prone to respiratory issues and dental problems
+           - British Shorthair: Higher risk of hypertrophic cardiomyopathy
+           
+        3. Consider gender and neutering status:
+           - Unneutered Males: Higher risk of urinary blockages and territorial behavior
+           - Unneutered Females: Risk of pyometra and reproductive issues
+           - All unneutered: Higher risk of certain cancers
+           
+        4. Weight-related considerations:
+           - Underweight (BMI < 18): Increase urgency for appetite and digestive issues
+           - Overweight (BMI > 25): Higher risk for diabetes, joint problems
+           - Sudden weight changes: Increase urgency level
+           
+        5. Age-specific risks:
+           - Kittens (< 1 year): More vulnerable to infections, parasites
+           - Adults (1-7 years): Monitor for breed-specific conditions
+           - Seniors (> 7 years): Higher risk of chronic diseases
+        
+        6. Common symptom combinations to consider:
            - Coughing + Drooling: May indicate respiratory infection, oral disease, or foreign body
            - Vomiting + Lethargy: Could suggest gastritis, poisoning, or systemic illness
            - Urinary changes + Crying: Often related to urinary tract issues or bladder stones
            
-        3. For each condition consider:
-           - Primary symptoms present
-           - Age-related risks
-           - Breed predispositions
-           - Medical history patterns
-        
-        4. Urgency levels:
+        7. Urgency levels:
            - Immediate Care: Life-threatening (breathing difficulty, severe bleeding, poisoning)
-           - Urgent Care: Needs vet within 24-48 hours (severe pain, persistent vomiting)
-           - Monitor: Watch closely (mild symptoms, eating/drinking normally)
+           - Urgent Care: Needs vet within 24-48 hours (severe pain, persistent vomiting, multiple concerning symptoms)
+           - Monitor: Watch closely (mild symptoms, single non-severe symptom, eating/drinking normally)
            - Home Care: Minor issues manageable at home
         
-        5. Recommendations should be specific and actionable, such as:
+        Single symptoms severity guide:
+        - Immediate Care: Difficulty breathing, severe bleeding, collapse, continuous seizures
+        - Urgent Care: High fever (over 103°F/39.4°C), severe persistent vomiting (>24h), inability to urinate
+        - Monitor: Mild fever, occasional vomiting, blood in urine, diarrhea, lethargy
+        - Home Care: Drooling, mild coughing, sneezing, mild limping, bad breath, itchy skin, runny nose
+
+        Symptom combinations that increase urgency:
+        - Difficulty breathing + Any other symptom -> Immediate Care
+        - Vomiting + Lethargy + Loss of appetite -> Urgent Care
+        - Blood in urine + Difficulty urinating -> Urgent Care
+        - Single mild symptom -> Home Care
+        - Two mild symptoms -> Monitor
+        
+        8. Recommendations should be specific and actionable, such as:
            - "Monitor breathing rate and seek vet if exceeds 40 breaths per minute"
            - "Keep cat in cool environment and ensure fresh water access"
            - "Book vet appointment within 24 hours for proper examination"
@@ -341,11 +362,7 @@ class WellnessViewModel: ObservableObject {
         """
         
         do {
-            print("🔍 Sending request to OpenAI API...")
-            print("📝 Prompt: \(prompt)")
-            
             guard let url = URL(string: APIConfig.OpenAI.endpoint) else {
-                print("❌ Invalid OpenAI endpoint URL")
                 throw NSError(domain: "WellnessViewModel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid OpenAI endpoint URL"])
             }
             
@@ -365,32 +382,17 @@ class WellnessViewModel: ObservableObject {
             
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             
-            print("📤 Request headers: \(request.allHTTPHeaderFields ?? [:])")
-            print("📤 Request body: \(String(data: request.httpBody!, encoding: .utf8) ?? "")")
-            
             let (data, response) = try await URLSession.shared.data(for: request)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📥 HTTP Status Code: \(httpResponse.statusCode)")
                 if httpResponse.statusCode != 200 {
-                    print("❌ HTTP Error: \(httpResponse.statusCode)")
-                    if let errorString = String(data: data, encoding: .utf8) {
-                        print("❌ Error Response: \(errorString)")
-                    }
                     throw NSError(domain: "WellnessViewModel", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP Error: \(httpResponse.statusCode)"])
                 }
-            }
-            
-            // 添加调试信息
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("📥 API Response: \(responseString)")
             }
             
             let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
             
             if let content = openAIResponse.choices.first?.message.content {
-                print("🤖 GPT Content: \(content)")
-                
                 if let jsonData = content.data(using: .utf8),
                    let aiResponse = try? JSONDecoder().decode(AIResponse.self, from: jsonData) {
                     await MainActor.run {
@@ -398,15 +400,12 @@ class WellnessViewModel: ObservableObject {
                     }
                     return aiResponse
                 } else {
-                    print("❌ Failed to decode AI response")
                     throw NSError(domain: "WellnessViewModel", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode AI response"])
                 }
             } else {
-                print("❌ No content in OpenAI response")
                 throw NSError(domain: "WellnessViewModel", code: -3, userInfo: [NSLocalizedDescriptionKey: "No content in OpenAI response"])
             }
         } catch {
-            print("❌ AI API Error: \(error)")
             self.error = error
             throw error
         }
@@ -429,7 +428,7 @@ class WellnessViewModel: ObservableObject {
     private func createHistoryContext() -> String {
         let recentHistory = analysisHistory
             .sorted { $0.date > $1.date }
-            .prefix(3)  // 最近的3次记录
+            .prefix(5)  // 使用所有存储的记录（最多5条）
             .map { analysis in
                 """
                 Analysis on \(formatDate(analysis.date)):

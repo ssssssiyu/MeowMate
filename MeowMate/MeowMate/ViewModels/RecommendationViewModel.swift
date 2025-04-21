@@ -100,23 +100,20 @@ class RecommendationViewModel: ObservableObject {
     
     private func generateRecommendations() {
         var newRecommendations: [Recommendation] = []
-        var healthConsiderations: Set<String> = []  // 使用 Set 避免重复
         
         // 1. 基于年龄的推荐
-        let age = Calendar.current.dateComponents([.year], from: cat.birthDate, to: Date()).year ?? 0
+        let ageInMonths = Calendar.current.dateComponents([.month], from: cat.birthDate, to: Date()).month ?? 0
         let lifeStage: String
-        if age < 1 {
+        if ageInMonths < 12 {
             lifeStage = "Kitten"
-            healthConsiderations.insert("Indoor/Outdoor Cats")
             newRecommendations.append(Recommendation(
                 title: "Kitten Formula",
                 description: "Special nutrition for growing kittens under 1 year",
                 type: .food,
                 priority: .high
             ))
-        } else if age > 7 {
+        } else if ageInMonths > 84 {  // 7年 = 84个月
             lifeStage = "Senior"
-            healthConsiderations.insert("Indoor/Outdoor Cats")
             newRecommendations.append(Recommendation(
                 title: "Senior Cat Food",
                 description: "Enhanced nutrition for cats over 7 years",
@@ -124,8 +121,7 @@ class RecommendationViewModel: ObservableObject {
                 priority: .high
             ))
         } else {
-            lifeStage = "Adult"  // 2岁的猫应该用 Adult
-            healthConsiderations.insert("Indoor/Outdoor Cats")
+            lifeStage = "Adult"
             newRecommendations.append(Recommendation(
                 title: "Adult Maintenance Formula",
                 description: "Complete nutrition for adult cats",
@@ -137,47 +133,38 @@ class RecommendationViewModel: ObservableObject {
         // 2. 基于体重状态的推荐
         switch weightStatus {
         case .underweight:
-            healthConsiderations.insert("Indoor/Outdoor Cats")
+            newRecommendations.append(Recommendation(
+                title: "Weight Gain Formula",
+                description: "High-calorie diet for healthy weight gain",
+                type: .food,
+                priority: .high
+            ))
         case .overweight:
-            healthConsiderations.insert("Indoor/Outdoor Cats")
+            newRecommendations.append(Recommendation(
+                title: "Weight Management Formula",
+                description: "Low-calorie diet for healthy weight loss",
+                type: .food,
+                priority: .high
+            ))
         case .normal:
-            healthConsiderations.insert("Indoor/Outdoor Cats")
+            break
         }
         
         // 3. 基于健康问题的推荐
         for issue in healthIssues {
             if let recommendation = getHealthRecommendation(for: issue) {
                 newRecommendations.append(recommendation)
-                
-                // 添加对应的健康考虑因素
-                switch issue.lowercased() {
-                case "hairball":
-                    healthConsiderations.insert("Hairball Control")
-                case "urinary":
-                    healthConsiderations.insert("Urinary Health")
-                case "dental":
-                    healthConsiderations.insert("Dental Health")
-                case "digestive issues":
-                    healthConsiderations.insert("Digestive Health")
-                case "skin allergies":
-                    healthConsiderations.insert("Skin & Coat")
-                default:
-                    break
-                }
             }
         }
         
         // 设置推荐
         self.recommendations = newRecommendations
         
-        // 获取推荐产品时转换回数组
-        let healthConsiderationsArray = Array(healthConsiderations)
-        
         Task { @MainActor in
             do {
                 let products = try await productService.fetchPetsmartProducts(
                     lifeStage: lifeStage,
-                    healthConsiderations: healthConsiderationsArray
+                    healthConsiderations: []  // 不再使用健康考虑因素
                 )
                 
                 // 确保在主线程更新并触发视图刷新
@@ -267,20 +254,33 @@ class RecommendationViewModel: ObservableObject {
             return nil
         }
     }
+    
+    func getProductsForRecommendation(_ recommendation: Recommendation) -> [PetFoodProduct] {
+        // 根据推荐类型和标题过滤产品
+        return recommendedProducts.filter { product in
+            switch recommendation.type {
+            case .food:
+                // 根据推荐标题中的关键词匹配产品
+                let keywords = recommendation.title.lowercased().components(separatedBy: " ")
+                return keywords.contains { keyword in
+                    product.name.lowercased().contains(keyword) ||
+                    product.lifeStage.lowercased().contains(keyword)
+                }
+            default:
+                return false
+            }
+        }
+    }
 }
 
 // 重命名 Product 为 PetFoodProduct
 struct PetFoodProduct: Identifiable {
     let id: String
     let name: String
-    let price: Double
     let link: String
-    let foodType: String
-    let flavor: String
-    let healthConsideration: String
-    let nutritionalOption: String
-    let breedSize: String
     let lifeStage: String
+    let brand: String?
+    let flavor: String?
 }
 
 // 删除重复的 PetFoodProductService 类 
