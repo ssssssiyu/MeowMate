@@ -27,8 +27,12 @@ struct WellnessView: View {
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .navigationTitle("Select Symptoms")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Theme.Text.navigationTitle("Health Analysis")
+            }
+        }
         .alert(isPresented: $showClearAlert) {
             Alert(
                 title: Text("Clear All Symptoms"),
@@ -606,7 +610,7 @@ struct SymptomBubble: View {
                     .stroke(isSelected ? Theme.mintGreen : Color.gray.opacity(0.3), lineWidth: 1)
             )
             .onTapGesture {
-                isSelected.toggle()
+                    isSelected.toggle()
             }
     }
 }

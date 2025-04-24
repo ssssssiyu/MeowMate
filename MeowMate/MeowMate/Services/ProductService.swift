@@ -8,8 +8,14 @@ class ProductService {
     // 添加测试方法
     func testFirebaseConnection() {
         let testCollection = db.collection("petsmart_products")
-        testCollection.getDocuments { (snapshot: QuerySnapshot?, _: Error?) in
-            // Handle snapshot if needed
+        testCollection.getDocuments { (snapshot: QuerySnapshot?, error: Error?) in
+            if error != nil {
+                return
+            }
+            
+            if snapshot != nil {
+                // 连接成功
+            }
         }
     }
     
@@ -18,29 +24,21 @@ class ProductService {
         
         let snapshot = try await productsRef.getDocuments()
         
-        let filteredProducts = snapshot.documents.compactMap { (document: QueryDocumentSnapshot) -> PetFoodProduct? in
+        let products = snapshot.documents.compactMap { (document: QueryDocumentSnapshot) -> PetFoodProduct? in
             let data = document.data()
             
-            guard let productLifeStage = data["life_stage"] as? String else {
-                return nil
-            }
-            
-            // 修改生命阶段匹配逻辑
-            let lifeStageMatches = productLifeStage == "All" || productLifeStage == lifeStage || lifeStage == "All"
-            if !lifeStageMatches {
-                return nil
-            }
-            
-            return PetFoodProduct(
+            let product = PetFoodProduct(
                 id: document.documentID,
                 name: data["name"] as? String ?? "",
                 link: data["link"] as? String ?? "",
-                lifeStage: productLifeStage,
+                lifeStage: data["life_stage"] as? String ?? "All",
                 brand: data["brand"] as? String,
                 flavor: data["flavor"] as? String
             )
+            
+            return product
         }
         
-        return filteredProducts
+        return products
     }
 } 

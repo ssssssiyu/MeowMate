@@ -24,7 +24,7 @@ struct CatDetailView: View {
         self.onDelete = onDelete
         self.onUpdate = onUpdate
         _wellnessViewModel = StateObject(wrappedValue: WellnessViewModel(cat: cat))
-        _recommendationViewModel = StateObject(wrappedValue: RecommendationViewModel(cat: cat, healthIssues: []))
+        _recommendationViewModel = StateObject(wrappedValue: RecommendationViewModel())
         _eventsViewModel = StateObject(wrappedValue: EventsViewModel(catId: cat.id.uuidString))
     }
     
@@ -225,20 +225,17 @@ struct CatDetailView: View {
                         HStack {
                             Image(systemName: "fork.knife.circle.fill")
                                 .foregroundColor(mintGreen)
-                            Text("Recommendations")
+                            Text("Food Products")
                                 .font(.subheadline)
                                 .bold()
                             
                             Spacer()
                             
                             NavigationLink(destination: ProductFilterView(
-                                recommendation: recommendationViewModel.recommendations.first ?? RecommendationViewModel.Recommendation(
-                                    title: "Pet Food",
-                                    description: "",
-                                    type: .food,
-                                    priority: .medium
-                                ),
-                                products: recommendationViewModel.recommendedProducts
+                                products: recommendationViewModel.recommendedProducts,
+                                onFilteredProductsChanged: { filteredProducts in
+                                    recommendationViewModel.updateFilteredProducts(filteredProducts)
+                                }
                             )) {
                                 Text("Filter")
                                     .font(.subheadline)
@@ -308,7 +305,6 @@ struct CatDetailView: View {
                let diseases = try? JSONDecoder().decode([String].self, from: storedData) {
                 wellnessViewModel.selectedDiseases = diseases
                 wellnessViewModel.updateHealthTips()
-                recommendationViewModel.updateHealthIssues(diseases)
             }
         }
         .sheet(isPresented: $isPresentingCatInfoForm) {
@@ -401,31 +397,31 @@ struct WellnessCard: View {
     }
     
     var body: some View {
-        NavigationLink(destination: WellnessView(cat: cat)) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "heart.circle.fill")
-                        .foregroundColor(mintGreen)
-                    Text("Wellness")
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "heart.circle.fill")
+                    .foregroundColor(mintGreen)
+                Text("Wellness")
+                    .font(.subheadline)
+                    .bold()
+                
+                Spacer()
+                
+                if let urgencyLevel = viewModel.analysisHistory.first?.urgencyLevel {
+                    Text(urgencyLevel)
                         .font(.subheadline)
-                        .bold()
-                    
-                    Spacer()
-                    
-                    if let urgencyLevel = viewModel.analysisHistory.first?.urgencyLevel {
-                        Text(urgencyLevel)
-                            .font(.subheadline)
-                            .foregroundColor(urgencyColor(urgencyLevel))
-                    } else {
-                        Text("Healthy")
-                            .font(.subheadline)
-                            .foregroundColor(mintGreen)
-                    }
+                        .foregroundColor(urgencyColor(urgencyLevel))
+                } else {
+                    Text("Healthy")
+                        .font(.subheadline)
+                        .foregroundColor(mintGreen)
                 }
-                .padding(.bottom, 4)
-                
-                Divider()
-                
+            }
+            .padding(.bottom, 4)
+            
+            Divider()
+            
+            NavigationLink(destination: WellnessView(cat: cat)) {
                 if let recommendations = viewModel.analysisHistory.first?.recommendations,
                    !recommendations.isEmpty {
                     Text(recommendations.map { "• " + $0 }.joined(separator: "\n"))
@@ -440,26 +436,13 @@ struct WellnessCard: View {
                         .padding(.vertical, 4)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(radius: 2)
+            .buttonStyle(PlainButtonStyle())
         }
-        .buttonStyle(PlainButtonStyle())
-        .task {
-            do {
-                let history = try await DataService.shared.fetchHealthAnalyses(forCat: cat.id)
-                await MainActor.run {
-                    viewModel.analysisHistory = history.sorted { $0.date > $1.date }
-                    if viewModel.analysisHistory.count > 5 {
-                        viewModel.analysisHistory = Array(viewModel.analysisHistory.prefix(5))
-                    }
-                }
-            } catch {
-                print("Error loading health analyses: \(error)")
-            }
-        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
     }
     
     private func urgencyColor(_ urgency: String) -> Color {

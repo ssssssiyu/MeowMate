@@ -4,18 +4,21 @@ struct ProductFilterView: View {
     @StateObject private var viewModel: ProductFilterViewModel
     @Environment(\.dismiss) private var dismiss
     
-    init(recommendation: RecommendationViewModel.Recommendation, products: [PetFoodProduct]) {
+    init(products: [PetFoodProduct], onFilteredProductsChanged: (([PetFoodProduct]) -> Void)? = nil) {
         _viewModel = StateObject(wrappedValue: ProductFilterViewModel(
-            recommendation: recommendation,
-            products: products
+            products: products,
+            onFilteredProductsChanged: onFilteredProductsChanged ?? { _ in }
         ))
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 筛选选项
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+        ZStack {
+            Color(.systemGray6)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                // 筛选选项
+                HStack(spacing: 16) {
                     FilterButton(
                         title: "Brand",
                         isSelected: viewModel.selectedFilter == .brand,
@@ -34,23 +37,22 @@ struct ProductFilterView: View {
                         action: { viewModel.selectedFilter = .lifeStage }
                     )
                 }
-                .padding(.horizontal)
-            }
-            .padding(.vertical, 8)
-            .background(Color.gray.opacity(0.1))
-            
-            // 筛选选项列表
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(viewModel.filterOptions, id: \.self) { option in
-                        FilterOptionRow(
-                            option: option,
-                            isSelected: viewModel.selectedOptions.contains(option),
-                            action: { viewModel.toggleOption(option) }
-                        )
+                .padding(.top, 28)
+                
+                // 筛选选项列表
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.filterOptions, id: \.self) { option in
+                            FilterOptionRow(
+                                option: option,
+                                isSelected: viewModel.selectedOptions.contains(option),
+                                action: { viewModel.toggleOption(option) }
+                            )
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 4)
                 }
-                .padding()
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -73,15 +75,13 @@ struct FilterButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .font(.system(size: 16, weight: .medium))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 .background(isSelected ? mintGreen : Color.white)
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(20)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                )
+                .shadow(color: Color.black.opacity(0.03), radius: 3, x: 0, y: 2)
         }
     }
 }
@@ -95,28 +95,14 @@ struct FilterOptionRow: View {
         Button(action: action) {
             HStack {
                 Text(option)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isSelected ? .white : .primary)
                 Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundColor(mintGreen)
-                }
             }
             .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
+            .background(isSelected ? mintGreen : Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.03), radius: 3, x: 0, y: 2)
         }
     }
 }
-
-#Preview {
-    ProductFilterView(
-        recommendation: RecommendationViewModel.Recommendation(
-            title: "Test",
-            description: "Test",
-            type: .food,
-            priority: .high
-        ),
-        products: []
-    )
-} 
+ 
