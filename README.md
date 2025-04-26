@@ -7,18 +7,18 @@ MeowMate is a comprehensive cat health management app designed for cat owners to
 - **Cat Profile Management:** Record breed, age, gender, neutering status, and photos.
 - **Weight Tracking:** Log and visualize your cat's weight history.
 - **Wellness Monitoring:** AI-assisted health analysis, symptom tracking, and actionable health tips.
-- **Food Recommendations:** Personalized food suggestions and filtering.
+- **Food Recommendations:** Personalized food suggestions with direct purchase links.
 - **Event Reminders:** Schedule and receive local notifications for vet appointments and other important events.
 - **Privacy First:** All data is stored locally on the user's device by default.
 
 ## Screenshots
-> Add screenshots of the app here to showcase the main features.
+<img src="Images/1.jpg" alt="App Screenshot" width="150"/><img src="Images/2.jpg" alt="App Screenshot" width="150"/><img src="Images/3.jpg" alt="App Screenshot" width="150"/><img src="Images/4.jpg" alt="App Screenshot" width="150"/><img src="Images/5.jpg" alt="App Screenshot" width="150"/><img src="Images/6.jpg" alt="App Screenshot" width="150"/>
 
 ## Installation
 ### Requirements
-- Xcode 14+
-- iOS 13.0+
-- Swift 5.7+
+- Xcode 16+
+- iOS 18.0+
+- Swift 5.0+
 
 ### Steps
 1. Clone this repository:

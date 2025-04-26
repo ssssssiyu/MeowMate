@@ -397,30 +397,30 @@ struct WellnessCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "heart.circle.fill")
-                    .foregroundColor(mintGreen)
-                Text("Wellness")
-                    .font(.subheadline)
-                    .bold()
-                
-                Spacer()
-                
-                if let urgencyLevel = viewModel.analysisHistory.first?.urgencyLevel {
-                    Text(urgencyLevel)
-                        .font(.subheadline)
-                        .foregroundColor(urgencyColor(urgencyLevel))
-                } else {
-                    Text("Healthy")
-                        .font(.subheadline)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "heart.circle.fill")
                         .foregroundColor(mintGreen)
+                    Text("Wellness")
+                        .font(.subheadline)
+                        .bold()
+                    
+                    Spacer()
+                    
+                    if let urgencyLevel = viewModel.analysisHistory.first?.urgencyLevel {
+                        Text(urgencyLevel)
+                            .font(.subheadline)
+                            .foregroundColor(urgencyColor(urgencyLevel))
+                    } else {
+                        Text("Healthy")
+                            .font(.subheadline)
+                            .foregroundColor(mintGreen)
+                    }
                 }
-            }
-            .padding(.bottom, 4)
-            
-            Divider()
-            
+                .padding(.bottom, 4)
+                
+                Divider()
+                
             NavigationLink(destination: WellnessView(cat: cat)) {
                 if let recommendations = viewModel.analysisHistory.first?.recommendations,
                    !recommendations.isEmpty {
@@ -437,12 +437,12 @@ struct WellnessCard: View {
                 }
             }
             .buttonStyle(PlainButtonStyle())
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(radius: 2)
         .task {
             do {
                 let history = try await DataService.shared.fetchHealthAnalyses(forCat: cat.id)

@@ -98,7 +98,7 @@ MeowMate/MeowMate/Config/APIConfig.swift
 .LSOverride
 
 # Thumbnails
-._*
+._* 
 
 # Environment files
 .env
