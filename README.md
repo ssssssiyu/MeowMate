@@ -8,7 +8,7 @@ MeowMate is a comprehensive cat health management app designed for cat owners to
 - **Weight Tracking:** Log and visualize your cat's weight history.
 - **Wellness Monitoring:** AI-assisted health analysis, symptom tracking, and actionable health tips.
 - **Food Recommendations:** Personalized food suggestions with direct purchase links.
-- **Event Reminders:** Schedule and receive local notifications for vet appointments and other important events.
+- **Event Reminders:** Schedule and receive local notifications for vet appointments and other events.
 - **Privacy First:** All data is stored locally on the user's device by default.
 
 ## Screenshots
