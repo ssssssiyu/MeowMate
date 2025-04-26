@@ -12,7 +12,7 @@ MeowMate is a comprehensive cat health management app designed for cat owners to
 - **Privacy First:** All data is stored locally on the user's device by default.
 
 ## Screenshots
-<img src="Images/1.jpg" alt="App Screenshot" width="150"/><img src="Images/2.jpg" alt="App Screenshot" width="150"/><img src="Images/3.jpg" alt="App Screenshot" width="150"/><img src="Images/4.jpg" alt="App Screenshot" width="150"/><img src="Images/5.jpg" alt="App Screenshot" width="150"/><img src="Images/6.jpg" alt="App Screenshot" width="150"/>
+<img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/>
 
 ## Installation
 ### Requirements
@@ -61,4 +61,4 @@ Info.plist               # App configuration
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Contact
-For questions, suggestions, or support, please open an issue on GitHub or contact the developer via the App Store support page. 
+For questions, suggestions, or support, please open an issue on GitHub.
