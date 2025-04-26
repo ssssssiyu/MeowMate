@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct SplashScreenView: View {
     @State private var isActive = false
@@ -7,50 +8,65 @@ struct SplashScreenView: View {
     @State private var yOffset: CGFloat = 0
     
     var body: some View {
-        if isActive {
-            HomeView()
-        } else {
-            ZStack {
-                Color.white
-                    .ignoresSafeArea()
-                
-                VStack {
-                    VStack(spacing: 10) {
-                        Image("SplashIcon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 120, height: 120)
-                            .offset(y: yOffset)
-                            .onAppear {
-                                withAnimation(
-                                    .easeInOut(duration: 0.6)
-                                    .repeatForever(autoreverses: true)
-                                ) {
-                                    yOffset = -20
+        Group {
+            if isActive {
+                HomeView()
+            } else {
+                ZStack {
+                    Color.white
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        VStack(spacing: 10) {
+                            Image("SplashIcon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 120, height: 120)
+                                .offset(y: yOffset)
+                                .onAppear {
+                                    withAnimation(
+                                        .easeInOut(duration: 0.6)
+                                        .repeatForever(autoreverses: true)
+                                    ) {
+                                        yOffset = -20
+                                    }
                                 }
+                            
+                            Text("MeowMate")
+                                .font(.custom("Chalkboard SE", size: 40))
+                                .foregroundColor(Color(red: 64/255, green: 198/255, blue: 194/255))
+                        }
+                        .scaleEffect(size)
+                        .opacity(opacity)
+                        .onAppear {
+                            withAnimation(.easeIn(duration: 1.2)) {
+                                self.size = 0.9
+                                self.opacity = 1.0
                             }
-                        
-                        Text("MeowMate")
-                            .font(.custom("Chalkboard SE", size: 40))
-                            .foregroundColor(Color(red: 64/255, green: 198/255, blue: 194/255))
-                    }
-                    .scaleEffect(size)
-                    .opacity(opacity)
-                    .onAppear {
-                        withAnimation(.easeIn(duration: 1.2)) {
-                            self.size = 0.9
-                            self.opacity = 1.0
                         }
                     }
-                }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        withAnimation {
-                            self.isActive = true
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation {
+                                self.isActive = true
+                            }
                         }
                     }
                 }
             }
+        }
+        .onAppear {
+            // ----------- 匿名登录逻辑 -----------
+            if Auth.auth().currentUser == nil {
+                Auth.auth().signInAnonymously { (authResult, error) in
+                    if let error = error {
+                        print("Firebase anonymous sign-in failed: \(error.localizedDescription)")
+                    } else {
+                        print("Firebase anonymous sign-in succeeded: \(authResult?.user.uid ?? "No UID")")
+                    }
+                }
+            }
+            // ----------- 匿名登录逻辑 -----------
         }
     }
 } 

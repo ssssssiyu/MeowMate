@@ -125,3 +125,10 @@ yarn-error.log*
 .idea/
 *.iml
 *.iws 
+
+# Ignore Xcode shared schemes (to avoid leaking API keys)
+MeowMate.xcodeproj/xcshareddata/xcschemes/
+*.xcscheme 
+
+# Ignore Firebase config
+GoogleService-Info.plist 

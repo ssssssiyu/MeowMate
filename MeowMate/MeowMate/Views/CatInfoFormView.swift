@@ -7,7 +7,7 @@ struct CatInfoFormView: View {
     private let formTitle: String  // 添加标题属性
     
     @Environment(\.dismiss) private var dismiss
-    @State private var name = "Cat"  // 默认名字设为 "Cat"
+    @State private var name = ""  // 默认名字设为 "Cat"
     @State private var breed = ""  // 改为空字符串作为初始值
     @State private var birthDate = Date()
     @State private var gender = Cat.Gender.female
