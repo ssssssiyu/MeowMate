@@ -3,8 +3,36 @@
 <plist version="1.0">
 <dict>
   <key>NSPhotoLibraryUsageDescription</key>
-  <string>需要访问相册来选择猫咪照片</string>
+  <string>We need access to your photo library to select cat photos</string>
   <key>NSPhotoLibraryAddUsageDescription</key>
-  <string>需要访问相册来保存猫咪照片</string>
+  <string>We need access to your photo library to save cat photos</string>
+  <key>NSCameraUsageDescription</key>
+  <string>We need access to your camera to take cat photos</string>
+  <key>NSUserNotificationsUsageDescription</key>
+  <string>We need to send notifications to remind you of important cat events</string>
+  <key>UIApplicationSceneManifest</key>
+  <dict>
+    <key>UIApplicationSupportsMultipleScenes</key>
+    <false/>
+    <key>UISceneConfigurations</key>
+    <dict>
+      <key>UIWindowSceneSessionRoleApplication</key>
+      <array>
+        <dict>
+          <key>UISceneConfigurationName</key>
+          <string>Default Configuration</string>
+          <key>UISceneDelegateClassName</key>
+          <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+        </dict>
+      </array>
+    </dict>
+  </dict>
+  <key>UILaunchScreen</key>
+  <dict>
+    <key>UIImageName</key>
+    <string>SplashIcon</string>
+  </dict>
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
 </dict>
 </plist> 

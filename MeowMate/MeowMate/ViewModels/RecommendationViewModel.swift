@@ -48,4 +48,4 @@ struct PetFoodProduct: Identifiable {
     let lifeStage: String
     let brand: String?
     let flavor: String?
-} 
+}

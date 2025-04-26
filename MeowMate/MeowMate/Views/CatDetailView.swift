@@ -238,7 +238,7 @@ struct CatDetailView: View {
                                 }
                             )) {
                                 Text("Filter")
-                                    .font(.subheadline)
+                                .font(.subheadline)
                                     .foregroundColor(mintGreen)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 1)
@@ -443,6 +443,16 @@ struct WellnessCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
+        .task {
+            do {
+                let history = try await DataService.shared.fetchHealthAnalyses(forCat: cat.id)
+                await MainActor.run {
+                    viewModel.analysisHistory = history.sorted { $0.date > $1.date }
+                }
+            } catch {
+                print("Error loading health analyses: \(error)")
+            }
+        }
     }
     
     private func urgencyColor(_ urgency: String) -> Color {
@@ -451,7 +461,7 @@ struct WellnessCard: View {
         case "Urgent Care": return .orange
         case "Monitor": return .yellow
         case "Home Care": return .green
-        default: return .blue
+        default: return mintGreen
         }
     }
 }

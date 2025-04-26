@@ -20,7 +20,8 @@ class DataService {
         // 2. 获取品种信息
         let breedSearchUrl = URL(string: "https://api.thecatapi.com/v1/breeds/search?q=\(encodedBreed)")!
         var request = URLRequest(url: breedSearchUrl)
-        request.setValue("live_Gg8qZBEQZXvGYRyGZFXZzXkGEkxQGpVQIpWLlGXgOLgGRjmIrYgQF5wXWHhBzwbH", forHTTPHeaderField: "x-api-key")
+        request.httpMethod = "GET"
+        request.setValue(APIConfig.catAPIKey, forHTTPHeaderField: "x-api-key")
         
         let (breedData, _) = try await URLSession.shared.data(from: request.url!)
         
@@ -33,7 +34,8 @@ class DataService {
         // 3. 获取图片 URL
         let imageUrl = URL(string: "https://api.thecatapi.com/v1/images/\(referenceImageId)")!
         request = URLRequest(url: imageUrl)
-        request.setValue("live_Gg8qZBEQZXvGYRyGZFXZzXkGEkxQGpVQIpWLlGXgOLgGRjmIrYgQF5wXWHhBzwbH", forHTTPHeaderField: "x-api-key")
+        request.httpMethod = "GET"
+        request.setValue(APIConfig.catAPIKey, forHTTPHeaderField: "x-api-key")
         
         let (imageData, _) = try await URLSession.shared.data(from: request.url!)
         
