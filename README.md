@@ -12,7 +12,7 @@ MeowMate is a comprehensive cat health management app designed for cat owners to
 - **Privacy First:** All data is stored locally on the user's device by default.
 
 ## Screenshots
-<img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/1.jpg" alt="App Screenshot" width="125"/>
+<img src="Images/1.jpg" alt="App Screenshot" width="125"/><img src="Images/2.jpg" alt="App Screenshot" width="125"/><img src="Images/3.jpg" alt="App Screenshot" width="125"/><img src="Images/4.jpg" alt="App Screenshot" width="125"/><img src="Images/5.jpg" alt="App Screenshot" width="125"/><img src="Images/6.jpg" alt="App Screenshot" width="125"/>
 
 ## Installation
 ### Requirements
