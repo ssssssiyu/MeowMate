@@ -243,7 +243,7 @@ class WellnessViewModel: ObservableObject {
         defer { isLoading = false }
         
         // 检查 API 密钥
-        let apiKey = APIConfig.openAIKey
+        let apiKey = Config.API.openAIKey
         if apiKey.isEmpty {
             print("❌ OpenAI API key is empty")
             throw NSError(domain: "WellnessViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI API key is not configured"])
@@ -362,7 +362,7 @@ class WellnessViewModel: ObservableObject {
         """
         
         do {
-            guard let url = URL(string: APIConfig.OpenAI.endpoint) else {
+            guard let url = URL(string: Config.API.OpenAI.endpoint) else {
                 throw NSError(domain: "WellnessViewModel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid OpenAI endpoint URL"])
             }
             
@@ -372,7 +372,7 @@ class WellnessViewModel: ObservableObject {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             
             let requestBody: [String: Any] = [
-                "model": APIConfig.OpenAI.model,
+                "model": Config.API.OpenAI.model,
                 "messages": [
                     ["role": "system", "content": "You are a professional veterinarian. Only respond with the exact JSON format specified. No other text."],
                     ["role": "user", "content": prompt]

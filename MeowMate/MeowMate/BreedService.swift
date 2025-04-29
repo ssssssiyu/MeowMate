@@ -4,7 +4,7 @@ class BreedService {
     private let baseURL = "https://api.thecatapi.com/v1/breeds"
 
     func fetchBreeds(completion: @escaping ([String]) -> Void) {
-        guard let url = URL(string: "\(baseURL)?api_key=\(APIConfig.catAPIKey)") else {
+        guard let url = URL(string: "\(baseURL)?api_key=\(Config.API.catAPIKey)") else {
             completion([])
             return
         }

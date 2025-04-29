@@ -91,6 +91,7 @@ iOSInjectionProject/
 
 # API Keys
 MeowMate/MeowMate/Config/APIConfig.swift
+MeowMate/MeowMate/Config/DefaultKeys.swift
 
 # macOS
 .DS_Store

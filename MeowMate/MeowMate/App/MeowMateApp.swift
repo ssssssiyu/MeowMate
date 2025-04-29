@@ -7,6 +7,9 @@ struct MeowMateApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     init() {
+        // 初始化 API keys
+        Config.API.setupKeysIfNeeded()
+        
         // 设置导航栏的主题色
         let mintGreen = UIColor(red: 55/255, green: 175/255, blue: 166/255, alpha: 1.0)
         

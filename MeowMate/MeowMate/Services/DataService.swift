@@ -4,9 +4,9 @@ import FirebaseStorage
 
 class DataService {
     static let shared = DataService()
-    private let db = FirebaseConfig.db
-    private let storage = FirebaseConfig.storage
-    private let deviceID = FirebaseConfig.deviceID
+    private let db = Config.Firebase.db
+    private let storage = Config.Firebase.storage
+    private let deviceID = Config.Device.deviceID
     
     private init() {}
     
@@ -21,7 +21,7 @@ class DataService {
         let breedSearchUrl = URL(string: "https://api.thecatapi.com/v1/breeds/search?q=\(encodedBreed)")!
         var request = URLRequest(url: breedSearchUrl)
         request.httpMethod = "GET"
-        request.setValue(APIConfig.catAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(Config.API.catAPIKey, forHTTPHeaderField: "x-api-key")
         
         let (breedData, _) = try await URLSession.shared.data(from: request.url!)
         
@@ -35,7 +35,7 @@ class DataService {
         let imageUrl = URL(string: "https://api.thecatapi.com/v1/images/\(referenceImageId)")!
         request = URLRequest(url: imageUrl)
         request.httpMethod = "GET"
-        request.setValue(APIConfig.catAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(Config.API.catAPIKey, forHTTPHeaderField: "x-api-key")
         
         let (imageData, _) = try await URLSession.shared.data(from: request.url!)
         

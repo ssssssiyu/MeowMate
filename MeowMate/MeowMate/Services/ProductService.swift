@@ -3,7 +3,7 @@ import FirebaseFirestore
 
 class ProductService {
     // 使用 FirebaseConfig 中的 db 实例
-    private let db = FirebaseConfig.db
+    private let db = Config.Firebase.db
     
     // 添加测试方法
     func testFirebaseConnection() {
@@ -20,7 +20,7 @@ class ProductService {
     }
     
     func fetchPetsmartProducts(lifeStage: String, healthConsiderations: [String]) async throws -> [PetFoodProduct] {
-        let productsRef = db.collection(FirebaseConfig.Collections.products)
+        let productsRef = db.collection(Config.Firebase.Collections.products)
         
         let snapshot = try await productsRef.getDocuments()
         

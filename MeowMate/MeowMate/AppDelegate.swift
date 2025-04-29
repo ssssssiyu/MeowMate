@@ -30,7 +30,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // 从 Keychain 获取密钥
         if let catAPIKey = KeychainService.retrieve(forAccount: "cat_api_key") {
             do {
-                try APIConfig.setCatAPIKey(catAPIKey)
+                try Config.API.setCatAPIKey(catAPIKey)
             } catch {
                 print("⚠️ Warning: Failed to set Cat API key")
             }
@@ -38,7 +38,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         if let openAIKey = KeychainService.retrieve(forAccount: "openai_api_key") {
             do {
-                try APIConfig.setOpenAIKey(openAIKey)
+                try Config.API.setOpenAIKey(openAIKey)
             } catch {
                 print("⚠️ Warning: Failed to set OpenAI API key")
             }
@@ -46,7 +46,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         // 验证 API Keys
         do {
-            try APIConfig.validateAPIKeys()
+            try Config.API.validateKeys()
         } catch {
             print("❌ Error: API keys validation failed")
             // 在生产环境中，你可能想要显示一个用户友好的错误信息

@@ -1,7 +1,7 @@
 import Foundation
 
 class DiseaseService {
-    private let apiKey = APIConfig.openAIKey
+    private let apiKey = Config.API.openAIKey
     private let endpoint = "https://api.openai.com/v1/chat/completions"
     
     // 预设的常见疾病列表
@@ -294,7 +294,7 @@ class DiseaseService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let requestBody: [String: Any] = [
-            "model": APIConfig.OpenAI.model,
+            "model": Config.API.OpenAI.model,
             "messages": [
                 [
                     "role": "system",
