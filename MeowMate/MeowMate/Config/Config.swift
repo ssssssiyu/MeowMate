@@ -61,26 +61,17 @@ enum Config {
             return ""
         }
         
-        static func setupKeysIfNeeded() {
+        static func setupKeysIfNeeded() throws {
             let hasInitialized = UserDefaults.standard.bool(forKey: hasInitializedKey)
-            guard !hasInitialized else { 
-                print("API keys 已经初始化过，跳过设置")
-                return 
-            }
+            guard !hasInitialized else { return }
             
-            do {
-                if openAIKey.isEmpty {
-                    try setOpenAIKey(DefaultKeys.openAIKey)
-                    print("成功设置 OpenAI API key")
-                }
-                if catAPIKey.isEmpty {
-                    try setCatAPIKey(DefaultKeys.catAPIKey)
-                    print("成功设置 Cat API key")
-                }
-                UserDefaults.standard.set(true, forKey: hasInitializedKey)
-            } catch {
-                print("设置 API keys 失败: \(error)")
+            if openAIKey.isEmpty {
+                try setOpenAIKey(DefaultKeys.openAIKey)
             }
+            if catAPIKey.isEmpty {
+                try setCatAPIKey(DefaultKeys.catAPIKey)
+            }
+            UserDefaults.standard.set(true, forKey: hasInitializedKey)
         }
         
         static func setOpenAIKey(_ key: String) throws {

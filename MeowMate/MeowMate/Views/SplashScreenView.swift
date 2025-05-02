@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseAuth
 
 struct SplashScreenView: View {
     @State private var isActive = false
@@ -43,30 +42,17 @@ struct SplashScreenView: View {
                                 self.size = 0.9
                                 self.opacity = 1.0
                             }
-                        }
-                    }
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                            withAnimation {
-                                self.isActive = true
+                            
+                            // 2秒后跳转到主页
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                withAnimation {
+                                    self.isActive = true
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        .onAppear {
-            // ----------- 匿名登录逻辑 -----------
-            if Auth.auth().currentUser == nil {
-                Auth.auth().signInAnonymously { (authResult, error) in
-                    if let error = error {
-                        print("Firebase anonymous sign-in failed: \(error.localizedDescription)")
-                    } else {
-                        print("Firebase anonymous sign-in succeeded: \(authResult?.user.uid ?? "No UID")")
-                    }
-                }
-            }
-            // ----------- 匿名登录逻辑 -----------
         }
     }
 } 

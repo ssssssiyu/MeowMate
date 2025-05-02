@@ -1,16 +1,23 @@
 import UIKit
 import FirebaseCore
 import FirebaseFirestore
+import FirebaseAuth
 import SwiftUI
 
 class AppDelegate: NSObject, UIApplicationDelegate {
 
     var window: UIWindow?
+    let authManager = AuthenticationManager.shared
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
         // 初始化 API Keys
         initializeAPIKeys()
+        
+        // 启动匿名登录
+        Task {
+            await authManager.ensureAnonymousUser()
+        }
         
         return true
     }
@@ -52,5 +59,45 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             // 在生产环境中，你可能想要显示一个用户友好的错误信息
             // 或者实现一个重试机制
         }
+    }
+}
+
+// 认证管理器
+class AuthenticationManager: ObservableObject {
+    static let shared = AuthenticationManager()
+    @Published var isAuthenticated = false
+    @Published var error: Error?
+    @Published var hasError = false
+    
+    private init() {}
+    
+    func ensureAnonymousUser() async {
+        do {
+            // 先登出当前用户（如果有的话）
+            try? Auth.auth().signOut()
+            
+            // 强制重新匿名登录
+            try await Auth.auth().signInAnonymously()
+            
+            await MainActor.run {
+                self.isAuthenticated = true
+                self.error = nil
+                self.hasError = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error
+                self.isAuthenticated = false
+                self.hasError = true
+            }
+            // 如果登录失败，等待3秒后重试
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await ensureAnonymousUser()
+        }
+    }
+    
+    // 强制重新登录的方法
+    func forceReLogin() async {
+        await ensureAnonymousUser()
     }
 } 
